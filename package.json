@@ -30,6 +30,7 @@
     "mocha": "^2.4.5"
   },
   "dependencies": {
+    "dasherize": "^2.0.0",
     "joi": "^8.0.3",
     "lodash": "^4.5.1"
   }

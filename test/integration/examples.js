@@ -114,8 +114,8 @@ describe('Examples', function() {
       'id': '1'
     });
     expect(includedAuhor1).to.have.property('attributes');
-    expect(includedAuhor1.attributes).to.have.property('firstName');
-    expect(includedAuhor1.attributes).to.have.property('lastName');
+    expect(includedAuhor1.attributes).to.have.property('first-name');
+    expect(includedAuhor1.attributes).to.have.property('last-name');
     expect(includedAuhor1.attributes).to.have.property('email');
     expect(includedAuhor1.attributes).to.have.property('age');
     expect(includedAuhor1.attributes).to.have.property('gender');
