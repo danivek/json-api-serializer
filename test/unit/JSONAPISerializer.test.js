@@ -697,6 +697,35 @@ describe('JSONAPISerializer', function() {
       done();
     });
 
+    it('should deserialize an array of data', function(done) {
+      const Serializer = new JSONAPISerializer();
+      Serializer.register('articles', {});
+
+      const data = {
+        data: [{
+          type: 'article',
+          id: '1',
+          attributes: {
+            title: 'JSON API paints my bikeshed!',
+            body: 'The shortest article. Ever.',
+            created: '2015-05-22T14:56:29.000Z'
+          }
+        }, {
+          type: 'article',
+          id: '2',
+          attributes: {
+            title: 'JSON API still paints my bikeshed!',
+            body: 'The second shortest article. Ever.',
+            created: '2015-06-22T14:56:29.000Z'
+          }
+        }]
+      };
+
+      const deserializedData = Serializer.deserialize('articles', data);
+      expect(deserializedData).to.have.length(2);
+      done();
+    });
+
     it('should deserialize with \'id\' options', function(done) {
       const Serializer = new JSONAPISerializer();
       Serializer.register('articles', {
