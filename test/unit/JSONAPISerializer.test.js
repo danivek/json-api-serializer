@@ -817,6 +817,52 @@ describe('JSONAPISerializer', function() {
       done();
     });
 
+    it('should deserialize all attributes of data except for blacklisted attributes', function(done) {
+      const data = {
+        data: {
+          type: 'article',
+          id: '1',
+          attributes: {
+            title: 'My First article',
+            body: 'Content of my article',
+          }
+        }
+      };
+
+      const Serializer = new JSONAPISerializer();
+      Serializer.register('articles', {
+        blacklistOnDeserialize: ['body'],
+      });
+
+      const deserializedData = Serializer.deserialize('articles', data);
+      expect(deserializedData).to.have.property('title');
+      expect(deserializedData).to.not.have.property('body');
+      done();
+    });
+
+    it('should deserialize only whitelisted attributes', function(done) {
+      const data = {
+        data: {
+          type: 'article',
+          id: '1',
+          attributes: {
+            title: 'My First article',
+            body: 'Content of my article',
+          }
+        }
+      };
+
+      const Serializer = new JSONAPISerializer();
+      Serializer.register('articles', {
+        whitelistOnDeserialize: ['body'],
+      });
+
+      const deserializedData = Serializer.deserialize('articles', data);
+      expect(deserializedData).to.have.property('body');
+      expect(deserializedData).to.not.have.property('title');
+      done();
+    });
+
     it('should throw an error if type as not been registered', function(done) {
       expect(function() {
         const Serializer = new JSONAPISerializer();
