@@ -5,6 +5,24 @@ const expect = require('chai').expect;
 const _ = require('lodash');
 const ObjectID = require('bson-objectid');
 
+class TickCounter {
+  constructor(max) {
+    this.ticks = 0;
+    this.max = max;
+
+    this.countTicks();
+  }
+
+  countTicks() {
+    setImmediate(() => {
+      this.ticks++;
+      if (this.max > this.ticks) {
+        this.countTicks();
+      }
+    })
+  }
+}
+
 const JSONAPISerializer = require('../../');
 
 describe('JSONAPISerializer', function() {
@@ -539,6 +557,55 @@ describe('JSONAPISerializer', function() {
       const serializedIncluded = Serializer.serializeIncluded(included);
       expect(serializedIncluded).to.have.lengthOf(1);
       done();
+    });
+  });
+
+  describe('serializeIncludedAsync', function() {
+    const Serializer = new JSONAPISerializer();
+
+    it('should return a Promise', () => {
+      const promise = Serializer.serializeIncludedAsync([]);
+      expect(promise).to.be.instanceOf(Promise);
+    });
+
+    it('should return undefined for empty included', () =>
+      Serializer.serializeIncludedAsync([])
+        .then((serializedIncluded) => {
+          expect(serializedIncluded).to.be.undefined;
+        })
+    );
+
+    it('should return unique values', () => {
+      const included = [{
+        type: 'author',
+        id: '1',
+        name: 'Author 1',
+      }, {
+        type: 'author',
+        id: '1',
+        name: 'Author 1',
+      }];
+      return Serializer.serializeIncludedAsync(included)
+        .then((serializedIncluded) => {
+          expect(serializedIncluded).to.have.lengthOf(1);
+        })
+    });
+
+    it('should serialize each array item on next tick', () => {
+      const included = [{
+        type: 'author',
+        id: '1',
+        name: 'Author 1',
+      }, {
+        type: 'author',
+        id: '1',
+        name: 'Author 1',
+      }];
+      const tickCounter = new TickCounter(5);
+      return Serializer.serializeIncludedAsync(included)
+        .then(() => {
+          expect(tickCounter.ticks).to.eql(3);
+        })
     });
   });
 
