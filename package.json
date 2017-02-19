@@ -32,6 +32,7 @@
     "mocha": "^2.4.5"
   },
   "dependencies": {
+    "into-stream": "^3.1.0",
     "joi": "^8.0.3",
     "lodash": "^4.5.1"
   }
