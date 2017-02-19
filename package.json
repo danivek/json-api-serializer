@@ -36,6 +36,7 @@
     "joi": "^8.0.3",
     "lodash": "^4.5.1",
     "stream-to-array": "^2.3.0",
+    "through2": "^2.0.3",
     "unique-stream": "^2.2.1"
   }
 }
