@@ -653,6 +653,87 @@ describe('JSONAPISerializer', function() {
     });
   });
 
+  describe('serializeAsync', function() {
+    const Serializer = new JSONAPISerializer();
+    const dataArray = [{
+      id: 1,
+      title: 'Article 1',
+    }, {
+      id: 2,
+      title: 'Article 2',
+    }, {
+      id: 3,
+      title: 'Article 3',
+    }]
+
+    Serializer.register('articles', {
+      topLevelMeta: {
+        count: function(options) {
+          return options.count
+        }
+      }
+    });
+
+    it('should return a Promise', () => {
+      const promise = Serializer.serializeAsync('articles', {});
+      expect(promise).to.be.instanceOf(Promise);
+    });
+
+    it('should serialize empty single data', () =>
+      Serializer.serializeAsync('articles', {})
+        .then((serializedData) => {
+          expect(serializedData.data).to.eql(null);
+          expect(serializedData.included).to.be.undefined;
+        })
+    );
+
+    it('should serialize empty array data', () =>
+      Serializer.serializeAsync('articles', [])
+        .then((serializedData) => {
+          expect(serializedData.data).to.eql([]);
+          expect(serializedData.included).to.be.undefined;
+        })
+    );
+
+    it('should serialize empty array data', () =>
+      Serializer.serializeAsync('articles', [])
+        .then((serializedData) => {
+          expect(serializedData.data).to.eql([]);
+          expect(serializedData.included).to.be.undefined;
+        })
+    );
+
+    it('should serialize an array of data', () =>
+      Serializer.serializeAsync('articles', dataArray)
+        .then((serializedData) => {
+          expect(serializedData.data.length).to.eql(3);
+        })
+    );
+
+    it('should serialize each array item on next tick', () => {
+      let ticks = 0;
+      setImmediate(() => {
+        ticks++;
+        setImmediate(() => {
+          ticks++;
+          setImmediate(() => {
+            ticks++;
+            setImmediate(() => {
+              ticks++;
+              setImmediate(() => {
+                ticks++;
+              })
+            })
+          })
+        })
+      });
+      return Serializer.serializeAsync('articles', dataArray)
+        .then(() => {
+          expect(ticks).to.eql(4);
+        })
+    });
+  });
+
   describe('deserialize', function() {
     it('should deserialize data with relationships', function(done) {
       const Serializer = new JSONAPISerializer();
