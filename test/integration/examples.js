@@ -128,4 +128,15 @@ describe('Examples', function() {
     expect(includedComment1.attributes).to.not.have.property('created');
     done();
   });
+
+  it('should serialize articles data (async)', () => {
+    var expected = Serializer.serialize('article', articlesData, {
+      count: 2
+    });
+    return Serializer.serializeAsync('article', articlesData, { count: 2 })
+      .then((actual) => {
+        expect(actual).to.deep.equal(expected);
+      })
+
+  });
 });
