@@ -778,25 +778,10 @@ describe('JSONAPISerializer', function() {
     );
 
     it('should serialize each array item on next tick', () => {
-      let ticks = 0;
-      setImmediate(() => {
-        ticks++;
-        setImmediate(() => {
-          ticks++;
-          setImmediate(() => {
-            ticks++;
-            setImmediate(() => {
-              ticks++;
-              setImmediate(() => {
-                ticks++;
-              })
-            })
-          })
-        })
-      });
+      const tickCounter = new TickCounter(5);
       return Serializer.serializeAsync('articles', dataArray)
         .then(() => {
-          expect(ticks).to.eql(4);
+          expect(tickCounter.ticks).to.eql(4);
         })
     });
   });
