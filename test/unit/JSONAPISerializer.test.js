@@ -784,6 +784,53 @@ describe('JSONAPISerializer', function() {
           expect(tickCounter.ticks).to.eql(4);
         })
     });
+
+    it('should serialize with extra options as the third argument', () => {
+      return Serializer.serializeAsync('articles', [], { count: 0 })
+        .then((serializedData) => {
+          expect(serializedData.data).to.eql([]);
+          expect(serializedData.included).to.be.undefined;
+          expect(serializedData.links).to.be.undefined;
+          expect(serializedData.meta).to.have.property('count').to.eql(0);
+        });
+    });
+
+    it('should serialize with a custom schema', () => {
+      const Serializer = new JSONAPISerializer();
+      Serializer.register('articles', 'only-title', {
+        whitelist: ['title']
+      });
+
+      const data = {
+        id: '1',
+        title: 'JSON API paints my bikeshed!',
+        body: 'The shortest article. Ever.'
+      };
+
+      return Serializer.serializeAsync('articles', data, 'only-title')
+        .then((serializedData) => {
+          expect(serializedData.data).to.have.property('type', 'articles');
+          expect(serializedData.data).to.have.property('id', '1');
+          expect(serializedData.data).to.have.property('attributes');
+          expect(serializedData.data.attributes).to.have.property('title');
+          expect(serializedData.data.attributes).to.not.have.property('body');
+          expect(serializedData.included).to.be.undefined;
+        });
+    });
+
+    it('should throw an error if type as not been registered', function(done) {
+      expect(function() {
+        Serializer.serializeAsync('authors', {});
+      }).to.throw(Error, 'No type registered for authors');
+      done();
+    });
+
+    it('should throw an error if custom schema as not been registered', function(done) {
+      expect(function() {
+        Serializer.serializeAsync('articles', {}, 'custom');
+      }).to.throw(Error, 'No schema custom registered for articles');
+      done();
+    });
   });
 
   describe('deserialize', function() {
