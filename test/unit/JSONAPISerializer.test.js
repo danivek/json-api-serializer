@@ -5,23 +5,7 @@ const expect = require('chai').expect;
 const _ = require('lodash');
 const ObjectID = require('bson-objectid');
 
-class TickCounter {
-  constructor(max) {
-    this.ticks = 0;
-    this.max = max;
-
-    this.countTicks();
-  }
-
-  countTicks() {
-    setImmediate(() => {
-      this.ticks++;
-      if (this.max > this.ticks) {
-        this.countTicks();
-      }
-    })
-  }
-}
+const TickCounter = require('../helpers/tick-counter');
 
 const JSONAPISerializer = require('../../');
 
