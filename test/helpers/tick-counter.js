@@ -1,3 +1,5 @@
+'use strict';
+
 class TickCounter {
   constructor(max) {
     this.ticks = 0;
