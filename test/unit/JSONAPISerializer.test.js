@@ -770,6 +770,14 @@ describe('JSONAPISerializer', function() {
         })
     );
 
+    it('should serialize a single object of data', () =>
+      Serializer.serializeAsync('articles', dataArray[0])
+        .then((serializedData) => {
+          expect(serializedData.data.id).to.eql('1');
+          expect(serializedData.data.attributes.title).to.eql('Article 1');
+        })
+    );
+
     it('should serialize an array of data', () =>
       Serializer.serializeAsync('articles', dataArray)
         .then((serializedData) => {
