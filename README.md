@@ -26,7 +26,7 @@ Serializer.register(type, options);
 ```
 **Serialization options :**
 
-- **id** (optional): The attributes to use as the reference. Default = 'id'.
+- **id** (optional): The key to use as the reference. Default = 'id'.
 - **blacklist** (optional): An array of blacklisted attributes. Default = [].
 - **whitelist** (optional): An array of whitelisted attributes. Default = [].
 - **links** (optional): An *object* or a *function* that describes the links inside data. (If it is an object values can be string or function).
@@ -356,6 +356,28 @@ relationships: {
   }
 }
 ```
+
+## Serialize mixed data (dynamic type)
+
+If your data contains one or multiple object of varying type, It's possible to define a configuration object instead of the type-string as the first argument of ```serialize``` and ```serializeAsync``` function with these options :
+
+- **type** (required): A *string* for the path to the key to use to determine type or a *function* deriving a type-string from each data-item.
+- **topLevelMeta** (optional): An *object* or a *function* that describes the top-level meta. (If it is an object values can be string or function).
+- **topLevelLinks** (optional): An *object* or a *function* that describes the top-level links. (If it is an object values can be string or function).
+
+Example :
+```javascript
+const typeConfig = {
+  // Same as type: 'type'
+  type: (data) => data.type, // Can be very complex to determine different types of items.
+};
+
+Serializer.serializeAsync(typeConfig, data, {count: 2})
+  .then((result) => {
+    // ...
+  });
+```
+
 
 ## Requirements
 

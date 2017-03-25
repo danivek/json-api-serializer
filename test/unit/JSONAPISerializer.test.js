@@ -139,6 +139,109 @@ describe('JSONAPISerializer', function() {
     });
   });
 
+  describe('serializeMixedData', function() {
+    const Serializer = new JSONAPISerializer();
+    Serializer.register('article');
+    Serializer.register('people');
+    const typeOption = {type: 'type'};
+    const defaultTypeOption = Serializer.validateDynamicTypeOptions(typeOption);
+
+    it('should return null for an empty single data', function(done) {
+      const serializedData = Serializer.serializeMixedData(defaultTypeOption, {});
+      expect(serializedData).to.eql(null);
+      done();
+    });
+
+    it('should return empty array for an empty array data', function(done) {
+      const serializedData = Serializer.serializeMixedData(defaultTypeOption, []);
+      expect(serializedData).to.eql([]);
+      done();
+    });
+
+    it('should return error if no type can be resolved from data', function(done) {
+      const singleData = {
+        id: '1',
+        body: 'test body',
+      };
+
+      expect(function() {
+        Serializer.serializeMixedData(defaultTypeOption, singleData);
+      }).to.throw(Error, 'No type can be resolved from data: {"id":"1","body":"test body"}');
+      done();
+    });
+
+    it('should return error if type has not been registered', function(done) {
+      const singleData = {
+        id: '1',
+        type: 'book',
+        body: 'test body',
+      };
+
+      expect(function() {
+        Serializer.serializeMixedData(defaultTypeOption, singleData);
+      }).to.throw(Error, 'No type registered for book');
+      done();
+    });
+
+    it('should return serialized data for a single data', function(done) {
+      const singleData = {
+        id: '1',
+        type: 'article',
+        body: 'test body',
+      };
+      const serializedData = Serializer.serializeMixedData(defaultTypeOption, singleData);
+
+      expect(serializedData).to.have.property('type').to.eql('article');
+      expect(serializedData).to.have.property('id').to.eql('1');
+      expect(serializedData).to.have.property('attributes').to.have.property('body').to.eql('test body');
+      expect(serializedData.relationships).to.be.undefined;
+      expect(serializedData.links).to.be.undefined;
+
+      done();
+    });
+
+    it('should return serialized data for an array with mixed data', function(done) {
+      const arrayData = [{
+        id: '1',
+        type: 'article',
+        body: 'article body',
+      }, {
+        id: '1',
+        type: 'people',
+        body: 'people body',
+      }];
+      const serializedData = Serializer.serializeMixedData(defaultTypeOption, arrayData);
+      expect(serializedData).to.be.instanceof(Array).to.have.lengthOf(2);
+      expect(serializedData[0]).to.have.property('type').to.eql('article');
+      expect(serializedData[0]).to.have.property('id').to.eql('1');
+      expect(serializedData[0]).to.have.property('attributes').to.have.property('body').to.eql('article body');
+      expect(serializedData[0].relationships).to.be.undefined;
+      expect(serializedData[0].links).to.be.undefined;
+      expect(serializedData[1]).to.have.property('type').to.eql('people');
+      expect(serializedData[1]).to.have.property('id').to.eql('1');
+      expect(serializedData[1]).to.have.property('attributes').to.have.property('body').to.eql('people body');
+      expect(serializedData[1].relationships).to.be.undefined;
+      expect(serializedData[1].links).to.be.undefined;
+      done();
+    });
+
+    it('should return serialized data with a type resolved from a function deriving a type-string from data', function(done) {
+      const singleData = {
+        id: '1',
+        type: 'article',
+        body: 'test body',
+      };
+      const typeFuncOption = {type: (data) => data.type ? 'article' : ''};
+      const defaultTypeFuncOption = Serializer.validateDynamicTypeOptions(typeFuncOption);
+      const serializedData = Serializer.serializeMixedData(defaultTypeFuncOption, singleData);
+
+      expect(serializedData).to.have.property('type').to.eql('article');
+      expect(serializedData).to.have.property('id').to.eql('1');
+      expect(serializedData).to.have.property('attributes').to.have.property('body').to.eql('test body');
+      done();
+    });
+  });
+
   describe('serializeRelationship', function() {
     const Serializer = new JSONAPISerializer();
     Serializer.register('authors');
@@ -689,17 +792,45 @@ describe('JSONAPISerializer', function() {
       done();
     });
 
-    it('should throw an error if type as not been registered', function(done) {
+    it('should throw an error if type has not been registered', function(done) {
       expect(function() {
         Serializer.serialize('authors', {});
       }).to.throw(Error, 'No type registered for authors');
       done();
     });
 
-    it('should throw an error if custom schema as not been registered', function(done) {
+    it('should throw an error if custom schema has not been registered', function(done) {
       expect(function() {
         Serializer.serialize('articles', {}, 'custom');
       }).to.throw(Error, 'No schema custom registered for articles');
+      done();
+    });
+
+    it('should throw an error when serialize mixed data with a bad dynamic type option', function(done) {
+      expect(function() {
+        Serializer.serialize({bad: 'bad'}, {});
+      }).to.throw(Error, 'ValidationError');
+      done();
+    });
+
+    it('should serialize mixed data with a dynamic type option as the first argument', function(done) {
+      const Serializer = new JSONAPISerializer();
+      Serializer.register('article');
+
+      const data = {
+        id: '1',
+        type: 'article',
+        title: 'JSON API paints my bikeshed!',
+        body: 'The shortest article. Ever.'
+      };
+
+      const serializedData = Serializer.serialize({type: 'type'}, data);
+      expect(serializedData.data).to.have.property('type', 'article');
+      expect(serializedData.data).to.have.property('id', '1');
+      expect(serializedData.data).to.have.property('attributes');
+      expect(serializedData.data.attributes).to.have.property('title');
+      expect(serializedData.data.attributes).to.have.property('body');
+      expect(serializedData.included).to.be.undefined;
       done();
     });
   });
@@ -810,18 +941,47 @@ describe('JSONAPISerializer', function() {
         });
     });
 
-    it('should throw an error if type as not been registered', function(done) {
+    it('should throw an error if type has not been registered', function(done) {
       expect(function() {
         Serializer.serializeAsync('authors', {});
       }).to.throw(Error, 'No type registered for authors');
       done();
     });
 
-    it('should throw an error if custom schema as not been registered', function(done) {
+    it('should throw an error if custom schema has not been registered', function(done) {
       expect(function() {
         Serializer.serializeAsync('articles', {}, 'custom');
       }).to.throw(Error, 'No schema custom registered for articles');
       done();
+    });
+
+    it('should throw an error when serialize mixed data with a bad dynamic type option', function(done) {
+      expect(function() {
+        Serializer.serializeAsync({bad: 'bad'}, {});
+      }).to.throw(Error, 'ValidationError');
+      done();
+    });
+
+    it('should serialize mixed data with a dynamic type option as the first argument', () => {
+      const Serializer = new JSONAPISerializer();
+      Serializer.register('article');
+
+      const data = {
+        id: '1',
+        type: 'article',
+        title: 'JSON API paints my bikeshed!',
+        body: 'The shortest article. Ever.'
+      };
+
+      return Serializer.serializeAsync({type: 'type'}, data)
+        .then((serializedData) => {
+          expect(serializedData.data).to.have.property('type', 'article');
+          expect(serializedData.data).to.have.property('id', '1');
+          expect(serializedData.data).to.have.property('attributes');
+          expect(serializedData.data.attributes).to.have.property('title');
+          expect(serializedData.data.attributes).to.have.property('body');
+          expect(serializedData.included).to.be.undefined;
+        });
     });
   });
 
@@ -1035,7 +1195,7 @@ describe('JSONAPISerializer', function() {
       done();
     });
 
-    it('should throw an error if type as not been registered', function(done) {
+    it('should throw an error if type has not been registered', function(done) {
       expect(function() {
         const Serializer = new JSONAPISerializer();
         Serializer.deserialize('authors', {});
@@ -1043,7 +1203,7 @@ describe('JSONAPISerializer', function() {
       done();
     });
 
-    it('should throw an error if custom schema as not been registered', function(done) {
+    it('should throw an error if custom schema has not been registered', function(done) {
       expect(function() {
         const Serializer = new JSONAPISerializer();
         Serializer.register('articles', {});
