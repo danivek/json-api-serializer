@@ -9,7 +9,6 @@ A Node.js framework agnostic library for serializing your data to [JSON API](htt
 
 Simply because others libraries are not as flexible as i need.
 
-
 ## Installation
 ```bash
 npm install --save json-api-serializer
@@ -45,7 +44,6 @@ Serializer.register(type, options);
 - **unconvertCase** (optional): Case conversion for deserializing data. Value can be : `kebab-case`, `snake_case`, `camelCase`
 - **blacklistOnDeserialize** (optional): An array of blacklisted attributes. Default = [].
 - **whitelistOnDeserialize** (optional): An array of whitelisted attributes. Default = [].
-
 
 ## Usage
 
@@ -328,7 +326,6 @@ Serializer.deserialize('article', data);
 }
 ```
 
-
 ## Custom schemas
 
 It is possible to define multiple custom schemas for a resource type :
@@ -359,7 +356,7 @@ relationships: {
 
 ## Serialize mixed data (dynamic type)
 
-If your data contains one or multiple object of varying type, It's possible to define a configuration object instead of the type-string as the first argument of ```serialize``` and ```serializeAsync``` function with these options :
+If your data contains one or multiple objects of varying types, it's possible to define a configuration object instead of the type-string as the first argument of ```serialize``` and ```serializeAsync``` with these options:
 
 - **type** (required): A *string* for the path to the key to use to determine type or a *function* deriving a type-string from each data-item.
 - **topLevelMeta** (optional): An *object* or a *function* that describes the top-level meta. (If it is an object values can be string or function).
@@ -377,7 +374,6 @@ Serializer.serializeAsync(typeConfig, data, {count: 2})
     // ...
   });
 ```
-
 
 ## Requirements
 

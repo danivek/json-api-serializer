@@ -806,7 +806,7 @@ describe('JSONAPISerializer', function() {
       done();
     });
 
-    it('should throw an error when serialize mixed data with a bad dynamic type option', function(done) {
+    it('should throw an error when serializing mixed data with a bad dynamic type option', function(done) {
       expect(function() {
         Serializer.serialize({bad: 'bad'}, {});
       }).to.throw(Error, 'ValidationError');
@@ -955,7 +955,7 @@ describe('JSONAPISerializer', function() {
       done();
     });
 
-    it('should throw an error when serialize mixed data with a bad dynamic type option', function(done) {
+    it('should throw an error when serializing mixed data with a bad dynamic type option', function(done) {
       expect(function() {
         Serializer.serializeAsync({bad: 'bad'}, {});
       }).to.throw(Error, 'ValidationError');
