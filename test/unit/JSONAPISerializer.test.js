@@ -962,6 +962,18 @@ describe('JSONAPISerializer', function() {
       done();
     });
 
+    it('should return an error when serializing mixed data with an unregistered type', () => {
+      const data = {
+        id: '1',
+        type: 'authors'
+      };
+
+      return Serializer.serializeAsync({type: 'type'}, data)
+        .catch(e => {
+          expect(e).to.be.an('error');
+        });
+    });
+
     it('should serialize mixed data with a dynamic type option as the first argument', () => {
       const Serializer = new JSONAPISerializer();
       Serializer.register('article');
