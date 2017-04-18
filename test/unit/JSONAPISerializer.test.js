@@ -470,6 +470,51 @@ describe('JSONAPISerializer', function() {
       expect(serializedRelationships.author).to.have.property('links').to.be.undefined;
       done();
     });
+
+    it('should throw an error if type as not been registered on a relationship', function(done) {
+      const included = [];
+      const Serializer = new JSONAPISerializer();
+
+      Serializer.register('article', {
+        relationships: {
+          author: {
+            type: 'people',
+          }
+        }
+      });
+
+      expect(function() {
+        Serializer.serializeRelationships({
+          id: '1',
+          author: '1'
+        }, Serializer.schemas.article.default, included);
+      }).to.throw(Error, 'No type registered for "people" on "author" relationship');
+      done();
+    });
+
+    it('should throw an error if custom schema as not been registered on a relationship', function(done) {
+      const included = [];
+      const Serializer = new JSONAPISerializer();
+
+      Serializer.register('article', {
+        relationships: {
+          author: {
+            type: 'people',
+            schema: 'custom'
+          }
+        }
+      });
+
+      Serializer.register('people');
+
+      expect(function() {
+        Serializer.serializeRelationships({
+          id: '1',
+          author: '1'
+        }, Serializer.schemas.article.default, included);
+      }).to.throw(Error, 'No schema "custom" registered for type "people" on "author" relationship');
+      done();
+    });
   });
 
   describe('serializeAttributes', function() {
@@ -1038,6 +1083,124 @@ describe('JSONAPISerializer', function() {
       expect(deserializedData).to.have.property('created');
       expect(deserializedData).to.have.property('author', '1');
       expect(deserializedData).to.have.property('comments').to.be.instanceof(Array).to.eql(['1', '2']);
+      done();
+    });
+
+    it('should deserialize data with included', function(done) {
+      const Serializer = new JSONAPISerializer();
+      Serializer.register('article', {
+        relationships: {
+          author: {
+            type: 'people'
+          },
+          comments: {
+            type: 'comment'
+          }
+        }
+      });
+      Serializer.register('people', {});
+      Serializer.register('comment', {
+        relationships: {
+          author: {
+            type: 'people'
+          }
+        }
+      });
+
+      const data = {
+        data: {
+          type: 'article',
+          id: '1',
+          attributes: {
+            title: 'JSON API paints my bikeshed!',
+            body: 'The shortest article. Ever.',
+            created: '2015-05-22T14:56:29.000Z'
+          },
+          relationships: {
+            author: {
+              data: {
+                type: 'people',
+                id: '1'
+              }
+            },
+            comments: {
+              data: [{
+                type: 'comment',
+                id: '1'
+              }, {
+                type: 'comment',
+                id: '2'
+              }]
+            }
+          }
+        },
+        included: [{
+            type: 'people',
+            id: '1',
+            attributes: {
+              firstName: 'Kaley',
+              lastName: 'Maggio',
+              email: 'Kaley-Maggio@example.com',
+              age: '80',
+              gender: 'male'
+            }
+          },
+          {
+            type: 'comment',
+            id: '1',
+            attributes: {
+              body: 'First !'
+            },
+            relationships: {
+              author: {
+                data: {
+                  type: 'people',
+                  id: '1'
+                }
+              }
+            }
+          },
+          {
+            type: 'comment',
+            id: '2',
+            attributes: {
+              body: 'I Like !'
+            },
+            relationships: {
+              author: {
+                data: {
+                  type: 'people',
+                  id: '1'
+                }
+              }
+            }
+          }
+        ]
+      };
+
+      const deserializedData = Serializer.deserialize('article', data);
+      expect(deserializedData).to.have.property('id');
+      expect(deserializedData).to.have.property('title');
+      expect(deserializedData).to.have.property('body');
+      expect(deserializedData).to.have.property('created');
+      expect(deserializedData).to.have.property('author');
+      expect(deserializedData.author).to.have.property('id');
+      expect(deserializedData.author).to.have.property('firstName');
+      expect(deserializedData.author).to.have.property('lastName');
+      expect(deserializedData).to.have.property('comments').to.be.instanceof(Array).to.have.length(2);
+      expect(deserializedData.comments[0]).to.have.property('id');
+      expect(deserializedData.comments[0]).to.have.property('body');
+      expect(deserializedData.comments[0]).to.have.property('author');
+      expect(deserializedData.comments[0].author).to.have.property('id');
+      expect(deserializedData.comments[0].author).to.have.property('firstName');
+      expect(deserializedData.comments[0].author).to.have.property('lastName');
+      expect(deserializedData.comments[1]).to.have.property('id');
+      expect(deserializedData.comments[1]).to.have.property('body');
+      expect(deserializedData.comments[1]).to.have.property('author');
+      expect(deserializedData.comments[1].author).to.have.property('id');
+      expect(deserializedData.comments[1].author).to.have.property('firstName');
+      expect(deserializedData.comments[1].author).to.have.property('lastName');
+
       done();
     });
 

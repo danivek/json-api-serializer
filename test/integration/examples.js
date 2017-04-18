@@ -140,32 +140,19 @@ describe('Examples', function() {
       })
   });
 
- it('should serialize mixed data', (done) => {
-   const dynamicTypeOption = {
-     type: 'type',
-     topLevelMeta: function(extraOptions) {
-       return {
-         count: extraOptions.count
-       }
-     },
-     topLevelLinks: {
-       self: '/mixed'
-     }
-   }
-   var serializedData = Serializer.serialize(dynamicTypeOption, mixedData, {
-     count: 2
-   });
-   expect(serializedData).to.have.property('jsonapi').to.have.property('version');
-   expect(serializedData).to.have.property('meta').to.have.property('count').to.eql(2);
-   expect(serializedData).to.have.property('links').to.have.property('self').to.eql('/mixed');
-   expect(serializedData).to.have.property('data');
-   expect(serializedData.data).to.be.instanceof(Array).to.have.lengthOf(2);
-   expect(serializedData.data[0]).to.have.property('type').to.eql('article');
-   expect(serializedData.data[1]).to.have.property('type').to.eql('people');
-   done();
+  it('should serialize with global options on \'JSONAPISerializer\' instance', (done) => {
+    const SerializerWithGlobalOptions = new JSONAPISerializer({
+      convertCase: 'kebab-case'
+    });
+
+    SerializerWithGlobalOptions.register('article');
+
+    const serializedData = SerializerWithGlobalOptions.serialize('article', { id: '1', articleBody: 'JSON API specifications' });
+    expect(serializedData.data.attributes).to.have.property('article-body');
+    done();
   });
 
-  it('should serialize mixed data (async)', () => {
+  it('should serialize mixed data', (done) => {
     const dynamicTypeOption = {
       type: 'type',
       topLevelMeta: function(extraOptions) {
@@ -177,12 +164,37 @@ describe('Examples', function() {
         self: '/mixed'
       }
     }
-    var expected = Serializer.serialize(dynamicTypeOption, mixedData, {
+    var serializedData = Serializer.serialize(dynamicTypeOption, mixedData, {
       count: 2
     });
-    return Serializer.serializeAsync(dynamicTypeOption, mixedData, { count: 2 })
-      .then((actual) => {
-        expect(actual).to.deep.equal(expected);
-      })
+    expect(serializedData).to.have.property('jsonapi').to.have.property('version');
+    expect(serializedData).to.have.property('meta').to.have.property('count').to.eql(2);
+    expect(serializedData).to.have.property('links').to.have.property('self').to.eql('/mixed');
+    expect(serializedData).to.have.property('data');
+    expect(serializedData.data).to.be.instanceof(Array).to.have.lengthOf(2);
+    expect(serializedData.data[0]).to.have.property('type').to.eql('article');
+    expect(serializedData.data[1]).to.have.property('type').to.eql('people');
+    done();
    });
+
+ it('should serialize mixed data (async)', () => {
+   const dynamicTypeOption = {
+     type: 'type',
+     topLevelMeta: function(extraOptions) {
+       return {
+         count: extraOptions.count
+       }
+     },
+     topLevelLinks: {
+       self: '/mixed'
+     }
+   }
+   var expected = Serializer.serialize(dynamicTypeOption, mixedData, {
+     count: 2
+   });
+   return Serializer.serializeAsync(dynamicTypeOption, mixedData, { count: 2 })
+     .then((actual) => {
+       expect(actual).to.deep.equal(expected);
+     })
+  });
 });

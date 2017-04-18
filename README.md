@@ -23,7 +23,7 @@ var JSONAPISerializer = require('json-api-serializer');
 var Serializer = new JSONAPISerializer();
 Serializer.register(type, options);
 ```
-**Serialization options :**
+**Serialization options:**
 
 - **id** (optional): The key to use as the reference. Default = 'id'.
 - **blacklist** (optional): An array of blacklisted attributes. Default = [].
@@ -39,11 +39,23 @@ Serializer.register(type, options);
         - **links** (optional): An *object* or a *function* that describes the links for the relationship. (If it is an object values can be string or function).
 - **convertCase** (optional): Case conversion for serializing data. Value can be : `kebab-case`, `snake_case`, `camelCase`
 
-**Deserialization options :**
+**Deserialization options:**
 
 - **unconvertCase** (optional): Case conversion for deserializing data. Value can be : `kebab-case`, `snake_case`, `camelCase`
 - **blacklistOnDeserialize** (optional): An array of blacklisted attributes. Default = [].
 - **whitelistOnDeserialize** (optional): An array of whitelisted attributes. Default = [].
+
+**Global options:**
+
+To avoid repeating the same options for each type, it's possible to add global options on `JSONAPISerializer` instance:
+
+```javascript
+var JSONAPISerializer = require('json-api-serializer');
+var Serializer = new JSONAPISerializer({
+  convertCase: 'kebab-case',
+  unconvertCase: 'caseCase'
+});
+```
 
 ## Usage
 
