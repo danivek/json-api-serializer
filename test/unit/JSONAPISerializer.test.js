@@ -699,16 +699,24 @@ describe('JSONAPISerializer', function() {
 
     it('should deserialize data with included', function(done) {
       const Serializer = new JSONAPISerializer();
-      Serializer.register('article', {relationships: {
-        author: {
-          type: 'people'
-        },
-        comments: {
-          type: 'comment'
+      Serializer.register('article', {
+        relationships: {
+          author: {
+            type: 'people'
+          },
+          comments: {
+            type: 'comment'
+          }
         }
-      }});
+      });
       Serializer.register('people', {});
-      Serializer.register('comment', {});
+      Serializer.register('comment', {
+        relationships: {
+          author: {
+            type: 'people'
+          }
+        }
+      });
 
       const data = {
         data: {
@@ -753,6 +761,14 @@ describe('JSONAPISerializer', function() {
             id: '1',
             attributes: {
               body: 'First !'
+            },
+            relationships: {
+              author: {
+                data: {
+                  type: 'people',
+                  id: '1'
+                }
+              }
             }
           },
           {
@@ -760,6 +776,14 @@ describe('JSONAPISerializer', function() {
             id: '2',
             attributes: {
               body: 'I Like !'
+            },
+            relationships: {
+              author: {
+                data: {
+                  type: 'people',
+                  id: '1'
+                }
+              }
             }
           }
         ]
@@ -777,8 +801,17 @@ describe('JSONAPISerializer', function() {
       expect(deserializedData).to.have.property('comments').to.be.instanceof(Array).to.have.length(2);
       expect(deserializedData.comments[0]).to.have.property('id');
       expect(deserializedData.comments[0]).to.have.property('body');
+      expect(deserializedData.comments[0]).to.have.property('author');
+      expect(deserializedData.comments[0].author).to.have.property('id');
+      expect(deserializedData.comments[0].author).to.have.property('firstName');
+      expect(deserializedData.comments[0].author).to.have.property('lastName');
       expect(deserializedData.comments[1]).to.have.property('id');
-      expect(deserializedData.comments[1]).to.have.property('body')
+      expect(deserializedData.comments[1]).to.have.property('body');
+      expect(deserializedData.comments[1]).to.have.property('author');
+      expect(deserializedData.comments[1].author).to.have.property('id');
+      expect(deserializedData.comments[1].author).to.have.property('firstName');
+      expect(deserializedData.comments[1].author).to.have.property('lastName');
+
       done();
     });
 
