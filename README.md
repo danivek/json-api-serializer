@@ -162,7 +162,14 @@ Serializer.register('comment', 'only-body', {
 Serialize it with the corresponding resource type, data and optional extra options :
 
 ```javascript
-Serializer.serialize('article', data, {count: 2});
+// Synchronously (blocking)
+const result = Serializer.serialize('article', data, {count: 2});
+
+// Asynchronously (non-blocking)
+Serializer.serializeAsync('article', data, {count: 2})
+  .then((result) => {
+    ...
+  });
 ```
 
 The output data will be :
@@ -334,6 +341,7 @@ Then you can apply this schema on the primary data when serialize or deserialize
 
 ```javascript
 Serializer.serialize('article', data, 'customSchema', {count: 2});
+Serializer.serializeAsync('article', data, 'customSchema', {count: 2});
 Serializer.deserialize('article', jsonapiData, 'customSchema');
 ```
 

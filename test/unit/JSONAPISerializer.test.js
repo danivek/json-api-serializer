@@ -5,6 +5,8 @@ const expect = require('chai').expect;
 const _ = require('lodash');
 const ObjectID = require('bson-objectid');
 
+const TickCounter = require('../helpers/tick-counter');
+
 const JSONAPISerializer = require('../../');
 
 describe('JSONAPISerializer', function() {
@@ -365,6 +367,51 @@ describe('JSONAPISerializer', function() {
       expect(serializedRelationships.author).to.have.property('links').to.be.undefined;
       done();
     });
+
+    it('should throw an error if type as not been registered on a relationship', function(done) {
+      const included = [];
+      const Serializer = new JSONAPISerializer();
+
+      Serializer.register('article', {
+        relationships: {
+          author: {
+            type: 'people',
+          }
+        }
+      });
+
+      expect(function() {
+        Serializer.serializeRelationships({
+          id: '1',
+          author: '1'
+        }, Serializer.schemas.article.default, included);
+      }).to.throw(Error, 'No type registered for "people" on "author" relationship');
+      done();
+    });
+
+    it('should throw an error if custom schema as not been registered on a relationship', function(done) {
+      const included = [];
+      const Serializer = new JSONAPISerializer();
+
+      Serializer.register('article', {
+        relationships: {
+          author: {
+            type: 'people',
+            schema: 'custom'
+          }
+        }
+      });
+
+      Serializer.register('people');
+
+      expect(function() {
+        Serializer.serializeRelationships({
+          id: '1',
+          author: '1'
+        }, Serializer.schemas.article.default, included);
+      }).to.throw(Error, 'No schema "custom" registered for type "people" on "author" relationship');
+      done();
+    });
   });
 
   describe('serializeAttributes', function() {
@@ -542,6 +589,55 @@ describe('JSONAPISerializer', function() {
     });
   });
 
+  describe('serializeIncludedAsync', function() {
+    const Serializer = new JSONAPISerializer();
+
+    it('should return a Promise', () => {
+      const promise = Serializer.serializeIncludedAsync([]);
+      expect(promise).to.be.instanceOf(Promise);
+    });
+
+    it('should return undefined for empty included', () =>
+      Serializer.serializeIncludedAsync([])
+        .then((serializedIncluded) => {
+          expect(serializedIncluded).to.be.undefined;
+        })
+    );
+
+    it('should return unique values', () => {
+      const included = [{
+        type: 'author',
+        id: '1',
+        name: 'Author 1',
+      }, {
+        type: 'author',
+        id: '1',
+        name: 'Author 1',
+      }];
+      return Serializer.serializeIncludedAsync(included)
+        .then((serializedIncluded) => {
+          expect(serializedIncluded).to.have.lengthOf(1);
+        })
+    });
+
+    it('should serialize each array item on next tick', () => {
+      const included = [{
+        type: 'author',
+        id: '1',
+        name: 'Author 1',
+      }, {
+        type: 'author',
+        id: '1',
+        name: 'Author 1',
+      }];
+      const tickCounter = new TickCounter(5);
+      return Serializer.serializeIncludedAsync(included)
+        .then(() => {
+          expect(tickCounter.ticks).to.eql(3);
+        })
+    });
+  });
+
   describe('processOptionsValues', function() {
 
     const Serializer = new JSONAPISerializer();
@@ -648,6 +744,127 @@ describe('JSONAPISerializer', function() {
     it('should throw an error if custom schema as not been registered', function(done) {
       expect(function() {
         Serializer.serialize('articles', {}, 'custom');
+      }).to.throw(Error, 'No schema custom registered for articles');
+      done();
+    });
+  });
+
+  describe('serializeAsync', function() {
+    const Serializer = new JSONAPISerializer();
+    const dataArray = [{
+      id: 1,
+      title: 'Article 1',
+    }, {
+      id: 2,
+      title: 'Article 2',
+    }, {
+      id: 3,
+      title: 'Article 3',
+    }]
+
+    Serializer.register('articles', {
+      topLevelMeta: {
+        count: function(options) {
+          return options.count
+        }
+      }
+    });
+
+    it('should return a Promise', () => {
+      const promise = Serializer.serializeAsync('articles', {});
+      expect(promise).to.be.instanceOf(Promise);
+    });
+
+    it('should serialize empty single data', () =>
+      Serializer.serializeAsync('articles', {})
+        .then((serializedData) => {
+          expect(serializedData.data).to.eql(null);
+          expect(serializedData.included).to.be.undefined;
+        })
+    );
+
+    it('should serialize empty array data', () =>
+      Serializer.serializeAsync('articles', [])
+        .then((serializedData) => {
+          expect(serializedData.data).to.eql([]);
+          expect(serializedData.included).to.be.undefined;
+        })
+    );
+
+    it('should serialize empty array data', () =>
+      Serializer.serializeAsync('articles', [])
+        .then((serializedData) => {
+          expect(serializedData.data).to.eql([]);
+          expect(serializedData.included).to.be.undefined;
+        })
+    );
+
+    it('should serialize a single object of data', () =>
+      Serializer.serializeAsync('articles', dataArray[0])
+        .then((serializedData) => {
+          expect(serializedData.data.id).to.eql('1');
+          expect(serializedData.data.attributes.title).to.eql('Article 1');
+        })
+    );
+
+    it('should serialize an array of data', () =>
+      Serializer.serializeAsync('articles', dataArray)
+        .then((serializedData) => {
+          expect(serializedData.data.length).to.eql(3);
+        })
+    );
+
+    it('should serialize each array item on next tick', () => {
+      const tickCounter = new TickCounter(5);
+      return Serializer.serializeAsync('articles', dataArray)
+        .then(() => {
+          expect(tickCounter.ticks).to.eql(4);
+        })
+    });
+
+    it('should serialize with extra options as the third argument', () => {
+      return Serializer.serializeAsync('articles', [], { count: 0 })
+        .then((serializedData) => {
+          expect(serializedData.data).to.eql([]);
+          expect(serializedData.included).to.be.undefined;
+          expect(serializedData.links).to.be.undefined;
+          expect(serializedData.meta).to.have.property('count').to.eql(0);
+        });
+    });
+
+    it('should serialize with a custom schema', () => {
+      const Serializer = new JSONAPISerializer();
+      Serializer.register('articles', 'only-title', {
+        whitelist: ['title']
+      });
+
+      const data = {
+        id: '1',
+        title: 'JSON API paints my bikeshed!',
+        body: 'The shortest article. Ever.'
+      };
+
+      return Serializer.serializeAsync('articles', data, 'only-title')
+        .then((serializedData) => {
+          expect(serializedData.data).to.have.property('type', 'articles');
+          expect(serializedData.data).to.have.property('id', '1');
+          expect(serializedData.data).to.have.property('attributes');
+          expect(serializedData.data.attributes).to.have.property('title');
+          expect(serializedData.data.attributes).to.not.have.property('body');
+          expect(serializedData.included).to.be.undefined;
+        });
+    });
+
+    it('should throw an error if type as not been registered', function(done) {
+      expect(function() {
+        Serializer.serializeAsync('authors', {});
+      }).to.throw(Error, 'No type registered for authors');
+      done();
+    });
+
+    it('should throw an error if custom schema as not been registered', function(done) {
+      expect(function() {
+        Serializer.serializeAsync('articles', {}, 'custom');
       }).to.throw(Error, 'No schema custom registered for articles');
       done();
     });
