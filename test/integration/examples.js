@@ -137,6 +137,17 @@ describe('Examples', function() {
       .then((actual) => {
         expect(actual).to.deep.equal(expected);
       })
+  });
 
+  it('should serialize with global options on \'JSONAPISerializer\' instance', (done) => {
+    const SerializerWithGlobalOptions = new JSONAPISerializer({
+      convertCase: 'kebab-case'
+    });
+
+    SerializerWithGlobalOptions.register('article');
+
+    const serializedData = SerializerWithGlobalOptions.serialize('article', { id: '1', articleBody: 'JSON API specifications' });
+    expect(serializedData.data.attributes).to.have.property('article-body');
+    done();
   });
 });
