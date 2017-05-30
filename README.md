@@ -31,10 +31,10 @@ Serializer.register(type, options);
 - **links** (optional): Describes the links inside data. It can be:
   - An *object* (values can be string or function).
   - A *function* with one argument `function(data) { ... }` or with two arguments `function(data, extraData) { ... }`
-- **topLevelMeta** (optional): Describes the top-level meta. It can be :
+- **topLevelMeta** (optional): Describes the top-level meta. It can be:
   - An *object* (values can be string or function).
   - A *function* with one argument `function(extraData) { ... }` or with two arguments `function(data, extraData) { ... }`
-- **topLevelLinks** (optional): Describes the top-level links. It can be :
+- **topLevelLinks** (optional): Describes the top-level links. It can be:
   - An *object* (values can be string or function).
   - A *function* with one argument `function(extraData) { ... }` or with two arguments `function(data, extraData) { ... }`
 - **relationships** (optional): An object defining some relationships
@@ -42,7 +42,7 @@ Serializer.register(type, options);
         - **type**: The type to use for serializing the relationship (type need to be register)
         - **alternativeKey** (optional): An alternative key to use if relationship key not exist (example: 'author_id' as an alternative key for 'author' relationship). See [issue #12](https://github.com/danivek/json-api-serializer/issues/12).
         - **schema** (optional): A custom schema for serializing the relationship. If no schema define, it use the default one.
-        - **links** (optional): Describes the links for the relationship. It can be :
+        - **links** (optional): Describes the links for the relationship. It can be:
           - An *object* (values can be string or function).
           - A *function* with one argument `function(data) { ... }` or with two arguments `function(data, extraData) { ... }`
 
@@ -381,10 +381,10 @@ relationships: {
 If your data contains one or multiple objects of varying types, it's possible to define a configuration object instead of the type-string as the first argument of ```serialize``` and ```serializeAsync``` with these options:
 
 - **type** (required): A *string* for the path to the key to use to determine type or a *function* deriving a type-string from each data-item.
-- **topLevelMeta** (optional): Describes the top-level meta. It can be :
+- **topLevelMeta** (optional): Describes the top-level meta. It can be:
   - An *object* (values can be string or function).
   - A *function* with one argument `function(extraData) { ... }` or with two arguments `function(data, extraData) { ... }`
-- **topLevelLinks** (optional): Describes the top-level links. It can be :
+- **topLevelLinks** (optional): Describes the top-level links. It can be:
   - An *object* (values can be string or function).
   - A *function* with one argument `function(extraData) { ... }` or with two arguments `function(data, extraData) { ... }`
 
