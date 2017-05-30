@@ -28,15 +28,24 @@ Serializer.register(type, options);
 - **id** (optional): The key to use as the reference. Default = 'id'.
 - **blacklist** (optional): An array of blacklisted attributes. Default = [].
 - **whitelist** (optional): An array of whitelisted attributes. Default = [].
-- **links** (optional): An *object* or a *function* that describes the links inside data. (If it is an object values can be string or function).
-- **topLevelMeta** (optional): An *object* or a *function* that describes the top-level meta. (If it is an object values can be string or function).
-- **topLevelLinks** (optional): An *object* or a *function* that describes the top-level links. (If it is an object values can be string or function).
+- **links** (optional): Describes the links inside data. It can be:
+  - An *object* (values can be string or function).
+  - A *function* with one argument `function(data) { ... }` or with two arguments `function(data, extraData) { ... }`
+- **topLevelMeta** (optional): Describes the top-level meta. It can be :
+  - An *object* (values can be string or function).
+  - A *function* with one argument `function(extraData) { ... }` or with two arguments `function(data, extraData) { ... }`
+- **topLevelLinks** (optional): Describes the top-level links. It can be :
+  - An *object* (values can be string or function).
+  - A *function* with one argument `function(extraData) { ... }` or with two arguments `function(data, extraData) { ... }`
 - **relationships** (optional): An object defining some relationships
     - relationship: The property in data to use as a relationship
         - **type**: The type to use for serializing the relationship (type need to be register)
         - **alternativeKey** (optional): An alternative key to use if relationship key not exist (example: 'author_id' as an alternative key for 'author' relationship). See [issue #12](https://github.com/danivek/json-api-serializer/issues/12).
         - **schema** (optional): A custom schema for serializing the relationship. If no schema define, it use the default one.
-        - **links** (optional): An *object* or a *function* that describes the links for the relationship. (If it is an object values can be string or function).
+        - **links** (optional): Describes the links for the relationship. It can be :
+          - An *object* (values can be string or function).
+          - A *function* with one argument `function(data) { ... }` or with two arguments `function(data, extraData) { ... }`
+
 - **convertCase** (optional): Case conversion for serializing data. Value can be : `kebab-case`, `snake_case`, `camelCase`
 
 **Deserialization options:**
@@ -53,7 +62,7 @@ To avoid repeating the same options for each type, it's possible to add global o
 var JSONAPISerializer = require('json-api-serializer');
 var Serializer = new JSONAPISerializer({
   convertCase: 'kebab-case',
-  unconvertCase: 'caseCase'
+  unconvertCase: 'camelCase'
 });
 ```
 
@@ -130,14 +139,14 @@ Serializer.register('article', {
       schema: 'only-body' // A custom schema
     }
   },
-  topLevelMeta: function(extraOptions) { // An object or a function that describes top level meta.
+  topLevelMeta: function(data, extraData) { // An object or a function that describes top level meta.
     return {
-      count: extraOptions.count,
-      total: extraOptions.total
+      count: extraData.count,
+      total: data.length
     }
   },
   topLevelLinks: { // An object or a function that describes top level links.
-    self: '/articles' // Can be a function (with extra options argument) or a string value
+    self: '/articles' // Can be a function (with extra data argument) or a string value
   }
 });
 
@@ -169,7 +178,7 @@ Serializer.register('comment', 'only-body', {
 
 ### Serialize
 
-Serialize it with the corresponding resource type, data and optional extra options :
+Serialize it with the corresponding resource type, data and optional extra data :
 
 ```javascript
 // Synchronously (blocking)
@@ -189,7 +198,8 @@ The output data will be :
     "version": "1.0"
   },
   "meta": {
-    "count": 2
+    "count": 2,
+    "total": 1
   },
   "links": {
     "self": "/articles"
@@ -360,8 +370,8 @@ Example :
 ```javascript
 relationships: {
   comments: {
-  type: 'comment'
-  schema: 'customSchema'
+    type: 'comment'
+    schema: 'customSchema'
   }
 }
 ```
@@ -371,8 +381,12 @@ relationships: {
 If your data contains one or multiple objects of varying types, it's possible to define a configuration object instead of the type-string as the first argument of ```serialize``` and ```serializeAsync``` with these options:
 
 - **type** (required): A *string* for the path to the key to use to determine type or a *function* deriving a type-string from each data-item.
-- **topLevelMeta** (optional): An *object* or a *function* that describes the top-level meta. (If it is an object values can be string or function).
-- **topLevelLinks** (optional): An *object* or a *function* that describes the top-level links. (If it is an object values can be string or function).
+- **topLevelMeta** (optional): Describes the top-level meta. It can be :
+  - An *object* (values can be string or function).
+  - A *function* with one argument `function(extraData) { ... }` or with two arguments `function(data, extraData) { ... }`
+- **topLevelLinks** (optional): Describes the top-level links. It can be :
+  - An *object* (values can be string or function).
+  - A *function* with one argument `function(extraData) { ... }` or with two arguments `function(data, extraData) { ... }`
 
 Example :
 ```javascript

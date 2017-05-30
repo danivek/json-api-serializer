@@ -748,7 +748,7 @@ describe('JSONAPISerializer', function() {
       const linksOptions = {
         self: '/articles',
       };
-      const links = Serializer.processOptionsValues({}, linksOptions);
+      const links = Serializer.processOptionsValues({}, null, linksOptions);
       expect(links).to.have.property('self').to.eql('/articles');
       done();
     });
@@ -761,7 +761,18 @@ describe('JSONAPISerializer', function() {
       };
       const links = Serializer.processOptionsValues({
         id: '1',
-      }, linksOptions);
+      }, null, linksOptions);
+      expect(links).to.have.property('self').to.eql('/articles/1');
+      done();
+    });
+
+    it('should process options with functions values with 2 arguments', function(done) {
+      const linksOptions = {
+        self: function(data, extraData) {
+          return extraData.url + '/' + data.id;
+        },
+      };
+      const links = Serializer.processOptionsValues({ id: '1' }, { url : '/articles' }, linksOptions);
       expect(links).to.have.property('self').to.eql('/articles/1');
       done();
     });
@@ -774,8 +785,30 @@ describe('JSONAPISerializer', function() {
       };
       const links = Serializer.processOptionsValues({
         id: '1',
-      }, optionsFn);
+      }, null, optionsFn);
       expect(links).to.have.property('self').to.eql('/articles/1');
+      done();
+    });
+
+    it('should process options function with 2 arguments', function(done) {
+      const optionsFn = function(data, extraData) {
+        return {
+          self: extraData.url + '/' + data.id
+        }
+      };
+      const links = Serializer.processOptionsValues({ id: '1' }, { url : '/articles' }, optionsFn);
+      expect(links).to.have.property('self').to.eql('/articles/1');
+      done();
+    });
+
+    it('should process options function with extraData as fallbackModeIfOneArg', function(done) {
+      const optionsFn = function(extraData) {
+        return {
+          self: extraData.url
+        }
+      };
+      const links = Serializer.processOptionsValues({ id: '1' }, { url : '/articles' }, optionsFn, 'extraData');
+      expect(links).to.have.property('self').to.eql('/articles');
       done();
     });
   });
