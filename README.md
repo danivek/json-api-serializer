@@ -29,23 +29,22 @@ Serializer.register(type, options);
 - **blacklist** (optional): An array of blacklisted attributes. Default = [].
 - **whitelist** (optional): An array of whitelisted attributes. Default = [].
 - **links** (optional): Describes the links inside data. It can be:
-  - An *object* (values can be string or function).
-  - A *function* with one argument `function(data) { ... }` or with two arguments `function(data, extraData) { ... }`
+    - An *object* (values can be string or function).
+    - A *function* with one argument `function(data) { ... }` or with two arguments `function(data, extraData) { ... }`
 - **topLevelMeta** (optional): Describes the top-level meta. It can be:
-  - An *object* (values can be string or function).
-  - A *function* with one argument `function(extraData) { ... }` or with two arguments `function(data, extraData) { ... }`
+    - An *object* (values can be string or function).
+    - A *function* with one argument `function(extraData) { ... }` or with two arguments `function(data, extraData) { ... }`
 - **topLevelLinks** (optional): Describes the top-level links. It can be:
-  - An *object* (values can be string or function).
-  - A *function* with one argument `function(extraData) { ... }` or with two arguments `function(data, extraData) { ... }`
+    - An *object* (values can be string or function).
+    - A *function* with one argument `function(extraData) { ... }` or with two arguments `function(data, extraData) { ... }`
 - **relationships** (optional): An object defining some relationships
     - relationship: The property in data to use as a relationship
         - **type**: The type to use for serializing the relationship (type need to be register)
         - **alternativeKey** (optional): An alternative key to use if relationship key not exist (example: 'author_id' as an alternative key for 'author' relationship). See [issue #12](https://github.com/danivek/json-api-serializer/issues/12).
         - **schema** (optional): A custom schema for serializing the relationship. If no schema define, it use the default one.
         - **links** (optional): Describes the links for the relationship. It can be:
-          - An *object* (values can be string or function).
-          - A *function* with one argument `function(data) { ... }` or with two arguments `function(data, extraData) { ... }`
-
+            - An *object* (values can be string or function).
+            - A *function* with one argument `function(data) { ... }` or with two arguments `function(data, extraData) { ... }`
 - **convertCase** (optional): Case conversion for serializing data. Value can be : `kebab-case`, `snake_case`, `camelCase`
 
 **Deserialization options:**
@@ -382,11 +381,11 @@ If your data contains one or multiple objects of varying types, it's possible to
 
 - **type** (required): A *string* for the path to the key to use to determine type or a *function* deriving a type-string from each data-item.
 - **topLevelMeta** (optional): Describes the top-level meta. It can be:
-  - An *object* (values can be string or function).
-  - A *function* with one argument `function(extraData) { ... }` or with two arguments `function(data, extraData) { ... }`
+    - An *object* (values can be string or function).
+    - A *function* with one argument `function(extraData) { ... }` or with two arguments `function(data, extraData) { ... }`
 - **topLevelLinks** (optional): Describes the top-level links. It can be:
-  - An *object* (values can be string or function).
-  - A *function* with one argument `function(extraData) { ... }` or with two arguments `function(data, extraData) { ... }`
+    - An *object* (values can be string or function).
+    - A *function* with one argument `function(extraData) { ... }` or with two arguments `function(data, extraData) { ... }`
 
 Example :
 ```javascript
