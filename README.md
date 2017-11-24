@@ -378,9 +378,11 @@ relationships: {
 }
 ```
 
-## Serialize mixed data (dynamic type)
+## Mixed data (dynamic type)
 
-If your data contains one or multiple objects of varying types, it's possible to define a configuration object instead of the type-string as the first argument of ```serialize``` and ```serializeAsync``` with these options:
+### Serialize
+
+If your data contains one or multiple objects of different types, it's possible to define a configuration object instead of the type-string as the first argument of ```serialize``` and ```serializeAsync``` with these options:
 
 - **type** (required): A *string* for the path to the key to use to determine type or a *function* deriving a type-string from each data-item.
 - **topLevelMeta** (optional): Describes the top-level meta. It can be:
@@ -401,6 +403,22 @@ Serializer.serializeAsync(typeConfig, data, {count: 2})
   .then((result) => {
     // ...
   });
+```
+
+### Deserialize
+
+If your data contains one or multiple objects of different types, it's possible to define a configuration object instead of the type-string as the first argument of ```deserialize``` with these options:
+
+- **type** (required): A *string* for the path to the key to use to determine type or a *function* deriving a type-string from each data-item.
+
+Example :
+```javascript
+const typeConfig = {
+  // Same as type: 'type'
+  type: (data) => data.type, // Can be very complex to determine different types of items.
+};
+
+const deserialized = Serializer.deserialize(typeConfig, data);
 ```
 
 ## Requirements

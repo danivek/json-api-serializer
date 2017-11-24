@@ -1496,4 +1496,99 @@ describe('JSONAPISerializer', function() {
       done();
     });
   });
+
+  describe('deserializeMixedData', function() {
+    const Serializer = new JSONAPISerializer();
+    Serializer.register('article');
+    Serializer.register('people');
+    const typeOption = {type: 'type'};
+
+    it('should return error if no type can be resolved from data', function(done) {
+      const singleData = {
+        data: {
+          id: '1'
+        }
+      };
+
+      expect(function() {
+        Serializer.deserialize(typeOption, singleData);
+      }).to.throw(Error, 'No type can be resolved from data: {"id":"1"}');
+      done();
+    });
+
+    it('should return error if type has not been registered', function(done) {
+      const singleData = {
+        data: {
+          id: '1',
+          type: 'book'
+        }
+      };
+
+      expect(function() {
+        Serializer.deserialize(typeOption, singleData);
+      }).to.throw(Error, 'No type registered for book');
+      done();
+    });
+
+    it('should return deserialized data for a single data', function(done) {
+      const singleData = {
+        data: {
+          id: '1',
+          type: 'article',
+          attributes: {
+            title: 'JSON API paints my bikeshed!',
+          }
+        }
+      };
+      const deserializedData = Serializer.deserialize(typeOption, singleData);
+
+      expect(deserializedData).to.have.property('id').to.eql('1');
+      expect(deserializedData).to.have.property('title').to.eql('JSON API paints my bikeshed!');
+      done();
+    });
+
+    it('should return deserialized data for an array with mixed data', function(done) {
+      const arrayData = {
+        data: [{
+          id: '1',
+          type: 'article',
+          attributes: {
+            title: 'JSON API paints my bikeshed!',
+          }
+        }, {
+          id: '1',
+          type: 'people',
+          attributes: {
+            firstName: 'Kaley',
+          }
+        }]
+      };
+      const deserializedData = Serializer.deserialize(typeOption, arrayData);
+      expect(deserializedData).to.be.instanceof(Array).to.have.lengthOf(2);
+      expect(deserializedData[0]).to.have.property('id').to.eql('1');
+      expect(deserializedData[0]).to.have.property('title').to.eql('JSON API paints my bikeshed!');
+      expect(deserializedData[1]).to.have.property('id').to.eql('1');
+      expect(deserializedData[1]).to.have.property('firstName').to.eql('Kaley');
+      done();
+    });
+
+    it('should return deserialized data with a type resolved from a function deriving a type-string from data', function(done) {
+      const data = {
+        data: {
+          id: '1',
+          type: 'article',
+          attributes: {
+            title: 'JSON API paints my bikeshed!',
+          }
+        }
+      };
+      const typeFuncOption = {type: (data) => data.type ? 'article' : ''};
+      const deserializedData = Serializer.deserialize(typeOption, data);
+
+      expect(deserializedData).to.have.property('id').to.eql('1');
+      expect(deserializedData).to.have.property('title').to.eql('JSON API paints my bikeshed!');
+
+      done();
+    });
+  });
 });
