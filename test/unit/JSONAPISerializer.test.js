@@ -111,6 +111,34 @@ describe('JSONAPISerializer', function() {
       done();
     });
 
+    it('should return merged & depuplicated serialized data for an array data', function(done) {
+      const arrayData = [{
+        id: '1',
+        body: 'test body 1',
+      }, {
+        id: '2',
+        body: 'test body 2',
+      }, {
+        id: '1',
+        body: 'test body 1',
+        additional: 'test additional 2',
+      }];
+      const serializedData = Serializer.serializeData('articles', arrayData, defaultOptions, null, null, {});
+      expect(serializedData).to.be.instanceof(Array).to.have.lengthOf(2);
+      expect(serializedData[0]).to.have.property('type').to.eql('articles');
+      expect(serializedData[0]).to.have.property('id').to.eql('1');
+      expect(serializedData[0]).to.have.property('attributes').to.have.property('body').to.eql('test body 1');
+      expect(serializedData[0].relationships).to.be.undefined;
+      expect(serializedData[0].links).to.be.undefined;
+      expect(serializedData[1]).to.have.property('type').to.eql('articles');
+      expect(serializedData[1]).to.have.property('id').to.eql('2');
+      expect(serializedData[1]).to.have.property('attributes').to.have.property('body').to.eql('test body 2');
+      expect(serializedData[1].relationships).to.be.undefined;
+      expect(serializedData[1].links).to.be.undefined;
+      expect(serializedData).to.have.property('length').to.eql(2);
+      done();
+    });
+
     it('should return serialized data with option id', function(done) {
       const singleData = {
         _id: '1',
@@ -232,6 +260,37 @@ describe('JSONAPISerializer', function() {
       expect(serializedData[1]).to.have.property('attributes').to.have.property('body').to.eql('people body');
       expect(serializedData[1].relationships).to.be.undefined;
       expect(serializedData[1].links).to.be.undefined;
+      done();
+    });
+
+    it('should return mergen and deduplicated serialized data for an array with mixed data', function(done) {
+      const arrayData = [{
+        id: '1',
+        type: 'article',
+        body: 'article body',
+      }, {
+        id: '1',
+        type: 'people',
+        body: 'people body',
+      }, {
+        id: '1',
+        type: 'people',
+        body: 'people body',
+        test: 'people body 2',
+      }];
+      const serializedData = Serializer.serializeMixedData(defaultTypeOption, arrayData);
+      expect(serializedData).to.be.instanceof(Array).to.have.lengthOf(2);
+      expect(serializedData[0]).to.have.property('type').to.eql('article');
+      expect(serializedData[0]).to.have.property('id').to.eql('1');
+      expect(serializedData[0]).to.have.property('attributes').to.have.property('body').to.eql('article body');
+      expect(serializedData[0].relationships).to.be.undefined;
+      expect(serializedData[0].links).to.be.undefined;
+      expect(serializedData[1]).to.have.property('type').to.eql('people');
+      expect(serializedData[1]).to.have.property('id').to.eql('1');
+      expect(serializedData[1]).to.have.property('attributes').to.have.property('body').to.eql('people body');
+      expect(serializedData[1].relationships).to.be.undefined;
+      expect(serializedData[1].links).to.be.undefined;
+      expect(serializedData).to.have.property('length').to.eql(2);
       done();
     });
 
