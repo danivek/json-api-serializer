@@ -1130,6 +1130,9 @@ describe('JSONAPISerializer', function() {
                 type: 'comment',
                 id: '2'
               }]
+            },
+            posts: {
+              data: null
             }
           }
         }
