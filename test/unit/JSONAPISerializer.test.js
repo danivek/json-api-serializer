@@ -1568,6 +1568,131 @@ describe('JSONAPISerializer', function() {
     });
   });
 
+  describe('deserializeAsync', function() {
+    const Serializer = new JSONAPISerializer();
+    Serializer.register('articles', {});
+    const dataArray = {
+      data: [
+        {
+          type: 'articles',
+          id: '1',
+          attributes: {
+            title: 'Article 1',
+          },
+        },
+        { type: 'articles',
+          id: '2',
+          attributes: {
+            title: 'Article 2',
+          },
+        },
+        { type: 'articles',
+          id: '3',
+          attributes: {
+            title: 'Article 3',
+          },
+        },
+      ],
+    };
+
+    it('should return a Promise', () => {
+      const promise = Serializer.deserializeAsync('articles', { data: {} });
+      expect(promise).to.be.instanceOf(Promise);
+    });
+
+    it('should deserialize simple data', () => {
+      const data = {
+        data: {
+          type: 'article',
+          id: '1',
+          attributes: {
+            title: 'JSON API paints my bikeshed!',
+            body: 'The shortest article. Ever.',
+            created: '2015-05-22T14:56:29.000Z'
+          },
+          relationships: {
+            author: {
+              data: {
+                type: 'people',
+                id: '1'
+              }
+            },
+            comments: {
+              data: [{
+                type: 'comment',
+                id: '1'
+              }, {
+                type: 'comment',
+                id: '2'
+              }]
+            }
+          }
+        }
+      };
+
+      return Serializer.deserializeAsync('articles', data)
+      .then((deserializedData) => {
+        expect(deserializedData).to.have.property('id');
+        expect(deserializedData).to.have.property('title');
+        expect(deserializedData).to.have.property('body');
+        expect(deserializedData).to.have.property('created');
+        expect(deserializedData).to.have.property('author', '1');
+        expect(deserializedData).to.have.property('comments').to.be.instanceof(Array).to.eql(['1', '2']);
+      });
+    });
+
+    it('should deserialize an array of data', () =>
+    Serializer.deserializeAsync('articles', dataArray)
+      .then((deserializedData) => {
+        expect(deserializedData.length).to.eql(3);
+      })
+    );
+
+    it('should deserialize each array item on next tick', () => {
+      const tickCounter = new TickCounter(5);
+      return Serializer.deserializeAsync('articles', dataArray)
+        .then(() => {
+          expect(tickCounter.ticks).to.eql(4);
+        })
+    });
+
+    it('should throw an error if type has not been registered', function(done) {
+      expect(function() {
+        Serializer.deserializeAsync('authors', {});
+      }).to.throw(Error, 'No type registered for authors');
+      done();
+    });
+
+    it('should throw an error if custom schema has not been registered', function(done) {
+      expect(function() {
+        Serializer.deserializeAsync('articles', {}, 'custom');
+      }).to.throw(Error, 'No schema custom registered for articles');
+      done();
+    });
+
+    it('should deserialize mixed data with a dynamic type option as the first argument', () => {
+      const data = {
+        data: {
+          type: 'articles',
+          id: '1',
+          attributes: {
+            type: 'articles',
+            title: 'JSON API paints my bikeshed!',
+            body: 'The shortest article. Ever.'
+          }
+        }
+      };
+
+      return Serializer.deserializeAsync({type: 'type'}, data)
+        .then((deserializedData) => {
+          expect(deserializedData).to.have.property('type', 'articles');
+          expect(deserializedData).to.have.property('id', '1');
+          expect(deserializedData).to.have.property('title');
+          expect(deserializedData).to.have.property('body');
+        });
+    });
+  });
+
   describe('deserializeMixedData', function() {
     const Serializer = new JSONAPISerializer();
     Serializer.register('article');
