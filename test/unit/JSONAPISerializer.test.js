@@ -937,6 +937,39 @@ describe('JSONAPISerializer', function() {
       expect(serializedData.included).to.be.undefined;
       done();
     });
+
+    it('should serialize with option \'jsonapiObject\' disabled', function(done) {
+      const Serializer = new JSONAPISerializer();
+      Serializer.register('article', {
+        jsonapiObject: false
+      });
+
+      const data = {
+        id: '1',
+        title: 'JSON API paints my bikeshed!',
+        body: 'The shortest article. Ever.'
+      };
+
+      const serializedData = Serializer.serialize('article', data);
+      expect(serializedData).have.property('jsonapi').to.be.undefined;
+      done();
+    });
+
+    it('should serialize mixed data with option \'jsonapiObject\' disabled', function(done) {
+      const Serializer = new JSONAPISerializer();
+      Serializer.register('article');
+
+      const data = {
+        id: '1',
+        type: 'article',
+        title: 'JSON API paints my bikeshed!',
+        body: 'The shortest article. Ever.'
+      };
+
+      const serializedData = Serializer.serialize({ type: 'type', jsonapiObject: false }, data);
+      expect(serializedData).have.property('jsonapi').to.be.undefined;
+      done();
+    });
   });
 
   describe('serializeAsync', function() {

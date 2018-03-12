@@ -28,6 +28,7 @@ Serializer.register(type, options);
 - **id** (optional): The key to use as the reference. Default = 'id'.
 - **blacklist** (optional): An array of blacklisted attributes. Default = [].
 - **whitelist** (optional): An array of whitelisted attributes. Default = [].
+- **jsonapiObject** (optional): Enable/Disable [JSON API Object](http://jsonapi.org/format/#document-jsonapi-object). Default = true.
 - **links** (optional): Describes the links inside data. It can be:
     - An *object* (values can be string or function).
     - A *function* with one argument `function(data) { ... }` or with two arguments `function(data, extraData) { ... }`
@@ -385,6 +386,7 @@ relationships: {
 If your data contains one or multiple objects of different types, it's possible to define a configuration object instead of the type-string as the first argument of ```serialize``` and ```serializeAsync``` with these options:
 
 - **type** (required): A *string* for the path to the key to use to determine type or a *function* deriving a type-string from each data-item.
+- **jsonapiObject** (optional): Enable/Disable [JSON API Object](http://jsonapi.org/format/#document-jsonapi-object). Default = true.
 - **topLevelMeta** (optional): Describes the top-level meta. It can be:
     - An *object* (values can be string or function).
     - A *function* with one argument `function(extraData) { ... }` or with two arguments `function(data, extraData) { ... }`
