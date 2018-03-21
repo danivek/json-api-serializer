@@ -73,7 +73,7 @@ describe('Examples', function() {
     var serializedData = Serializer.serialize('article', articlesData, {
       count: 2
     });
-    expect(serializedData).to.have.property('jsonapi').to.have.property('version');
+    expect(serializedData).to.have.property('jsonapi').to.have.property('version').to.eql('1.0');
     expect(serializedData).to.have.property('meta').to.have.property('count').to.eql(2);
     expect(serializedData).to.have.property('links').to.have.property('self').to.eql('/articles');
     expect(serializedData).to.have.property('data');
