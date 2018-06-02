@@ -263,30 +263,62 @@ describe('JSONAPISerializer', function() {
       },
     });
 
+     it('should throw an error if type as not been registered', function(done) {
+      const included = [];
+      const SerializerError = new JSONAPISerializer();
+
+      expect(function() {
+        SerializerError.serializeRelationship('people', 'default', '1', included);
+      }).to.throw(Error, 'No type registered for "people"');
+      done();
+    });
+
+    it('should throw an error if custom schema as not been registered on a relationship', function(done) {
+      const included = [];
+      const SerializerError = new JSONAPISerializer();
+      SerializerError.register('people');
+
+      expect(function() {
+        SerializerError.serializeRelationship('people', 'custom', '1', included);
+      }).to.throw(Error, 'No schema "custom" registered for type "people"');
+      done();
+    });
+
+    it('should throw an error if no type can be resolved', function(done) {
+      const included = [];
+      const SerializerError = new JSONAPISerializer();
+      const typeFn = (data) => data.notype;
+
+      expect(function() {
+        SerializerError.serializeRelationship(typeFn, 'default', '1', included);
+      }).to.throw(Error, 'No type can be resolved from relationship\'s data: "1"');
+      done();
+    });
+
     it('should return undefined for an undefined relationship data', function(done) {
-      const serializedRelationshipData = Serializer.serializeRelationship('articles', undefined);
+      const serializedRelationshipData = Serializer.serializeRelationship('articles', 'default', undefined);
       expect(serializedRelationshipData).to.eql(undefined);
       done();
     });
 
     it('should return null for an empty single relationship data', function(done) {
-      const serializedRelationshipData = Serializer.serializeRelationship('articles', {});
+      const serializedRelationshipData = Serializer.serializeRelationship('articles', 'default', {});
       expect(serializedRelationshipData).to.eql(null);
       done();
     });
 
     it('should return empty array for an empty array of relationship data', function(done) {
-      const serializedRelationshipData = Serializer.serializeRelationship('articles', []);
+      const serializedRelationshipData = Serializer.serializeRelationship('articles', 'default', []);
       expect(serializedRelationshipData).to.eql([]);
       done();
     });
 
     it('should return serialized relationship data and populated included for a to one populated relationship', function(done) {
       const included = [];
-      const serializedRelationshipData = Serializer.serializeRelationship('authors', {
+      const serializedRelationshipData = Serializer.serializeRelationship('authors', 'default', {
         id: '1',
         name: 'Author 1',
-      }, Serializer.schemas.authors.default, included);
+      }, included);
       expect(serializedRelationshipData).to.have.property('type').to.eql('authors');
       expect(serializedRelationshipData).to.have.property('id').to.be.a('string').to.eql('1');
       expect(included).to.have.lengthOf(1);
@@ -295,13 +327,13 @@ describe('JSONAPISerializer', function() {
 
     it('should return serialized relationship data and populated included for a to many populated relationships', function(done) {
       const included = [];
-      const serializedRelationshipData = Serializer.serializeRelationship('authors', [{
+      const serializedRelationshipData = Serializer.serializeRelationship('authors', 'default', [{
         id: '1',
         name: 'Author 1',
       }, {
         id: '2',
         name: 'Author 2',
-      }], Serializer.schemas.authors.default, included);
+      }], included);
       expect(serializedRelationshipData).to.be.instanceof(Array).to.have.lengthOf(2);
       expect(serializedRelationshipData[0]).to.have.property('type').to.eql('authors');
       expect(serializedRelationshipData[0]).to.have.property('id').to.be.a('string').to.eql('1');
@@ -313,9 +345,9 @@ describe('JSONAPISerializer', function() {
 
     it('should return type of string for a to one populated relationship with non string id', function(done) {
       const included = [];
-      const serializedRelationshipData = Serializer.serializeRelationship('authors', {
+      const serializedRelationshipData = Serializer.serializeRelationship('authors', 'default', {
         id: 1
-      }, Serializer.schemas.authors.default, included);
+      }, included);
       expect(serializedRelationshipData).to.have.property('type').to.eql('authors');
       expect(serializedRelationshipData).to.have.property('id').to.be.a('string').to.eql('1');
       done();
@@ -323,7 +355,7 @@ describe('JSONAPISerializer', function() {
 
     it('should return serialized relationship data and empty included for a to one unpopulated relationship', function(done) {
       const included = [];
-      const serializedRelationshipData = Serializer.serializeRelationship('authors', '1', Serializer.schemas.authors.default, included);
+      const serializedRelationshipData = Serializer.serializeRelationship('authors', 'default', '1', included);
       expect(serializedRelationshipData).to.have.property('type').to.eql('authors');
       expect(serializedRelationshipData).to.have.property('id').to.be.a('string').to.eql('1');
       expect(included).to.have.lengthOf(0);
@@ -332,7 +364,7 @@ describe('JSONAPISerializer', function() {
 
     it('should return serialized relationship data and empty included for a to many unpopulated relationship', function(done) {
       const included = [];
-      const serializedRelationshipData = Serializer.serializeRelationship('authors', ['1', '2'], Serializer.schemas.authors.default, included);
+      const serializedRelationshipData = Serializer.serializeRelationship('authors', 'default', ['1', '2'], included);
       expect(serializedRelationshipData).to.be.instanceof(Array).to.have.lengthOf(2);
       expect(serializedRelationshipData[0]).to.have.property('type').to.eql('authors');
       expect(serializedRelationshipData[0]).to.have.property('id').to.be.a('string').to.eql('1');
@@ -344,14 +376,14 @@ describe('JSONAPISerializer', function() {
 
     it('should return type of string for a to one unpopulated relationship with non string id', function(done) {
       const included = [];
-      const serializedRelationshipData = Serializer.serializeRelationship('authors', 1, Serializer.schemas.authors.default, included);
+      const serializedRelationshipData = Serializer.serializeRelationship('authors', 'default', 1, included);
       expect(serializedRelationshipData).to.have.property('type').to.eql('authors');
       expect(serializedRelationshipData).to.have.property('id').to.be.a('string').to.eql('1');
       done();
     });
 
     it('should return serialized relationship with unpopulated relationship with mongoDB BSON ObjectID', function(done) {
-      const serializedRelationshipData = Serializer.serializeRelationship('authors', new ObjectID(), Serializer.schemas.authors.default, []);
+      const serializedRelationshipData = Serializer.serializeRelationship('authors', 'default', new ObjectID(), []);
       expect(serializedRelationshipData).to.have.property('type').to.eql('authors');
       expect(serializedRelationshipData).to.have.property('id').to.be.a('string');
       done();
@@ -365,11 +397,11 @@ describe('JSONAPISerializer', function() {
       });
 
       const included = [];
-      const serializedRelationshipData = Serializer2.serializeRelationship('authors', {
+      const serializedRelationshipData = Serializer2.serializeRelationship('authors', 'only-name', {
         id: '1',
         name: 'Author 1',
         gender: 'male'
-      }, Serializer2.schemas.authors['only-name'], included);
+      }, included);
       expect(serializedRelationshipData).to.have.property('type').to.eql('authors');
       expect(serializedRelationshipData).to.have.property('id').to.eql('1');
       expect(included).to.have.lengthOf(1);
@@ -378,6 +410,47 @@ describe('JSONAPISerializer', function() {
       expect(included[0]).to.have.property('attributes');
       expect(included[0].attributes).to.have.property('name', 'Author 1');
       expect(included[0].attributes).to.not.have.property('gender');
+      done();
+    });
+
+    it('should serialize relationship with dynamic type', function(done) {
+      const included = [];
+      const typeFn = (data) => data.type;
+
+      const Serializer = new JSONAPISerializer();
+      Serializer.register('people');
+      Serializer.register('author');
+
+      const data = [{
+        type: 'people',
+        id: '1',
+        name: 'Roman Nelson'
+      }, {
+        type: 'author',
+        id: '1',
+        firstName: 'Kaley',
+        lastName: 'Maggio'
+      }]
+
+      const serializedRelationships = Serializer.serializeRelationship(typeFn, 'default', data, included);
+      expect(serializedRelationships).to.deep.equal([
+        { type: 'people', id: '1' },
+        { type: 'author', id: '1' }
+      ]);
+      expect(included).to.deep.equal([
+      {
+        type: 'people',
+        id: '1',
+        attributes: { type: 'people', name: 'Roman Nelson' },
+        relationships: undefined,
+        links: undefined
+      }, {
+        type: 'author',
+        id: '1',
+        attributes: { type: 'author', firstName: 'Kaley', lastName: 'Maggio' },
+        relationships: undefined,
+        links: undefined }
+      ]);
       done();
     });
   });
@@ -494,51 +567,6 @@ describe('JSONAPISerializer', function() {
       expect(serializedRelationships.author.data).to.have.property('type').to.eql('people');
       expect(serializedRelationships.author.data).to.have.property('id').to.be.a('string').to.eql('1');
       expect(serializedRelationships.author).to.have.property('links').to.be.undefined;
-      done();
-    });
-
-    it('should throw an error if type as not been registered on a relationship', function(done) {
-      const included = [];
-      const Serializer = new JSONAPISerializer();
-
-      Serializer.register('article', {
-        relationships: {
-          author: {
-            type: 'people',
-          }
-        }
-      });
-
-      expect(function() {
-        Serializer.serializeRelationships({
-          id: '1',
-          author: '1'
-        }, Serializer.schemas.article.default, included);
-      }).to.throw(Error, 'No type registered for "people" on "author" relationship');
-      done();
-    });
-
-    it('should throw an error if custom schema as not been registered on a relationship', function(done) {
-      const included = [];
-      const Serializer = new JSONAPISerializer();
-
-      Serializer.register('article', {
-        relationships: {
-          author: {
-            type: 'people',
-            schema: 'custom'
-          }
-        }
-      });
-
-      Serializer.register('people');
-
-      expect(function() {
-        Serializer.serializeRelationships({
-          id: '1',
-          author: '1'
-        }, Serializer.schemas.article.default, included);
-      }).to.throw(Error, 'No schema "custom" registered for type "people" on "author" relationship');
       done();
     });
   });
