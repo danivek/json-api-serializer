@@ -1848,4 +1848,102 @@ describe('JSONAPISerializer', function() {
       done();
     });
   });
+
+  describe('serializeError', function() {
+    const Serializer = new JSONAPISerializer();
+
+    it('should return serialized error with an instance of Error', function(done) {
+      const error = new Error('An error occured');
+      error.status = 500;
+      error.code = 'ERROR';
+
+      const serializedError = Serializer.serializeError(error);
+
+      console.log(JSON.stringify(serializedError));
+
+      expect(serializedError).to.have.property('errors').to.be.instanceof(Array).to.have.lengthOf(1);
+      expect(serializedError.errors[0]).to.have.property('status').to.eql('500');
+      expect(serializedError.errors[0]).to.have.property('code').to.eql('ERROR');
+      expect(serializedError.errors[0]).to.have.property('detail').to.eql('An error occured');
+      
+      done();
+    });
+
+    it('should return serialized errors with an array of Error', function(done) {
+      const errors = [new Error('First Error'), new Error('Second Error')];
+
+      const serializedErrors = Serializer.serializeError(errors);
+
+      expect(serializedErrors).to.have.property('errors').to.be.instanceof(Array).to.have.lengthOf(2);
+      expect(serializedErrors.errors[0]).to.have.property('detail').to.eql('First Error');
+      expect(serializedErrors.errors[1]).to.have.property('detail').to.eql('Second Error');
+      
+      done();
+    });
+
+    it('should return a validation error when serializing error with a malformed JSON API error object', function(done) {
+      const jsonapiError = {
+        status: '422',
+        source: 'malformed attribute'
+      };
+
+      expect(function() {
+        Serializer.serializeError(jsonapiError);
+      }).to.throw(Error);
+      
+      done();
+    });
+
+    it('should return serialized error with a JSON API error object', function(done) {
+      const jsonapiError = {
+        status: '422',
+        source: { pointer: '/data/attributes/error' },
+        title: 'Error',
+        detail: 'An error occured'
+      };
+
+      const serializedError = Serializer.serializeError(jsonapiError);
+
+      expect(serializedError).to.have.property('errors').to.be.instanceof(Array).to.have.lengthOf(1);
+      expect(serializedError.errors[0]).to.deep.eql({
+        status: '422',
+        source: { pointer: '/data/attributes/error' },
+        title: 'Error',
+        detail: 'An error occured'
+      });
+      
+      done();
+    });
+
+    it('should return serialized error with an array of JSON API error object', function(done) {
+      const jsonapiErrors = [{
+        status: '422',
+        source: { pointer: '/data/attributes/first-error' },
+        title: 'First Error',
+        detail: 'First Error'
+      }, {
+        status: '422',
+        source: { pointer: '/data/attributes/second-error' },
+        title: 'Second Error',
+        detail: 'Second Error'
+      }];
+
+      const serializedError = Serializer.serializeError(jsonapiErrors);
+
+      expect(serializedError).to.have.property('errors').to.be.instanceof(Array).to.have.lengthOf(2);
+      expect(serializedError.errors).to.deep.eql([{
+        status: '422',
+        source: { pointer: '/data/attributes/first-error' },
+        title: 'First Error',
+        detail: 'First Error'
+      }, {
+        status: '422',
+        source: { pointer: '/data/attributes/second-error' },
+        title: 'Second Error',
+        detail: 'Second Error'
+      }]);
+      
+      done();
+    });
+  })
 });
