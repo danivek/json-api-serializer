@@ -382,6 +382,34 @@ Serializer.deserializeAsync('article', data)
 }
 ```
 
+### serializeError
+
+Serializes any error into a JSON API error document.
+
+Input data can be:
+  - An instance of Error or an array of instance of Error.
+  - A [JSON API error object](http://jsonapi.org/format/#error-objects) or an array of [JSON API error object](http://jsonapi.org/format/#error-objects).
+
+```javascript
+const error = new Error('An error occured');
+error.status = 500;
+
+Serializer.serializeError(error);
+```
+
+The result will be:
+
+```JSON
+{
+  "errors": [
+    {
+      "status": "500",
+      "detail": "An error occured"
+    }
+  ]
+}
+```
+
 ## Custom schemas
 
 It is possible to define multiple custom schemas for a resource type :
