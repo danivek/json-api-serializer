@@ -88,6 +88,21 @@ describe('JSONAPISerializer', function() {
       done();
     });
 
+    it('should return only resource identifier objects (type, id)', function(done) {
+      const singleData = {
+        id: '1',
+      };
+      const serializedData = Serializer.serializeData('articles', singleData, defaultOptions);
+
+      expect(serializedData).to.have.property('type').to.eql('articles');
+      expect(serializedData).to.have.property('id').to.eql('1');
+      expect(serializedData.attributes).to.be.undefined;
+      expect(serializedData.relationships).to.be.undefined;
+      expect(serializedData.links).to.be.undefined;
+
+      done();
+    });
+
     it('should return serialized data for an array data', function(done) {
       const arrayData = [{
         id: '1',
@@ -1858,8 +1873,6 @@ describe('JSONAPISerializer', function() {
       error.code = 'ERROR';
 
       const serializedError = Serializer.serializeError(error);
-
-      console.log(JSON.stringify(serializedError));
 
       expect(serializedError).to.have.property('errors').to.be.instanceof(Array).to.have.lengthOf(1);
       expect(serializedError.errors[0]).to.have.property('status').to.eql('500');
