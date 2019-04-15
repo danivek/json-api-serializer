@@ -52,6 +52,8 @@ Serializer.register(type, options);
     * **meta** (optional): Describes meta that contains non-standard meta-information about the relationship. It can be:
       * An _object_ (values can be string or function).
       * A _function_ with one argument `function(data) { ... }` or with two arguments `function(data, extraData) { ... }`
+    * **deserialize** (optional): Describes the function which should be used to deserialize a related property which is not included in the JSON:API document. It should be:
+      * A _function_ with one argument `function(data) { ... }`which defines the format to which a relation should be deserialized. By default, the ID of the related object is returned, which would be equal to `function(data) {return data.id}`. See [issue #65](https://github.com/danivek/json-api-serializer/issues/65).
 * **convertCase** (optional): Case conversion for serializing data. Value can be : `kebab-case`, `snake_case`, `camelCase`
 
 **Deserialization options:**
