@@ -1520,6 +1520,43 @@ describe('JSONAPISerializer', function() {
       done();
     });
 
+    it('should deserialize with \'deserialize\' option as a function', function(done) {
+      const Serializer = new JSONAPISerializer();
+      Serializer.register('articles', {
+        relationships: {
+          author: {
+            type: 'people',
+            deserialize: (data) => ({id: data.id, type: data.type})
+          }
+        }
+      });
+
+      const data = {
+        data: {
+          type: 'article',
+          id: '1',
+          attributes: {
+            title: 'JSON API paints my bikeshed!',
+            body: 'The shortest article. Ever.',
+            created: '2015-05-22T14:56:29.000Z'
+          },
+          relationships: {
+            author: {
+              data: {
+                type: 'people',
+                id: '1'
+              }
+            }
+          }
+        }
+      };
+
+      const deserializedData = Serializer.deserialize('articles', data);
+      expect(deserializedData.author).to.have.property('id');
+      expect(deserializedData.author).to.have.property('type');
+      done();
+    })
+
     it('should deserialize with \'unconvertCase\' options', function(done) {
       const Serializer = new JSONAPISerializer();
       Serializer.register('articles', {
