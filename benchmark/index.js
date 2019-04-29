@@ -55,20 +55,20 @@ serializer.register('article', {
   id: 'id', // The attributes to use as the reference. Default = 'id'.
   links: {
     // An object or a function that describes links.
-    self(data) {
+    self(d) {
       // Can be a function or a string value ex: { self: '/articles/1'}
-      return `/articles/${data.id}`;
+      return `/articles/${d.id}`;
     },
   },
   relationships: {
     // An object defining some relationships.
     author: {
       type: 'people', // The type of the resource
-      links(data) {
+      links(d) {
         // An object or a function that describes Relationships links
         return {
-          self: `/articles/${data.id}/relationships/author`,
-          related: `/articles/${data.id}/author`,
+          self: `/articles/${d.id}/relationships/author`,
+          related: `/articles/${d.id}/author`,
         };
       },
     },
@@ -83,11 +83,11 @@ serializer.register('article', {
       schema: 'only-body', // A custom schema
     },
   },
-  topLevelMeta(data, extraData) {
+  topLevelMeta(d, extraData) {
     // An object or a function that describes top level meta.
     return {
       count: extraData.count,
-      total: data.length,
+      total: d.length,
     };
   },
   topLevelLinks: {
@@ -100,8 +100,8 @@ serializer.register('article', {
 serializer.register('people', {
   id: 'id',
   links: {
-    self(data) {
-      return `/peoples/${data.id}`;
+    self(d) {
+      return `/peoples/${d.id}`;
     },
   },
 });
@@ -133,7 +133,7 @@ console.log('V8:', process.versions.v8);
 
 let cpus = os.cpus().map(cpu => cpu.model).reduce((o, model) => {
   if (!o[model]) o[model] = 0;
-  o[model]++;
+  o[model] += 1;
   return o;
 }, {});
 

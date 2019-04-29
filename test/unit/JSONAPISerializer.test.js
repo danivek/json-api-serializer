@@ -279,33 +279,30 @@ describe('JSONAPISerializer', function() {
     });
 
      it('should throw an error if type as not been registered', function(done) {
-      const included = [];
       const SerializerError = new JSONAPISerializer();
 
       expect(function() {
-        SerializerError.serializeRelationship('people', 'default', '1', included);
+        SerializerError.serializeRelationship('people', 'default', '1');
       }).to.throw(Error, 'No type registered for "people"');
       done();
     });
 
     it('should throw an error if custom schema as not been registered on a relationship', function(done) {
-      const included = [];
       const SerializerError = new JSONAPISerializer();
       SerializerError.register('people');
 
       expect(function() {
-        SerializerError.serializeRelationship('people', 'custom', '1', included);
+        SerializerError.serializeRelationship('people', 'custom', '1');
       }).to.throw(Error, 'No schema "custom" registered for type "people"');
       done();
     });
 
     it('should throw an error if no type can be resolved', function(done) {
-      const included = [];
       const SerializerError = new JSONAPISerializer();
       const typeFn = (data) => data.notype;
 
       expect(function() {
-        SerializerError.serializeRelationship(typeFn, 'default', '1', included);
+        SerializerError.serializeRelationship(typeFn, 'default', '1');
       }).to.throw(Error, 'No type can be resolved from relationship\'s data: "1"');
       done();
     });
@@ -329,19 +326,19 @@ describe('JSONAPISerializer', function() {
     });
 
     it('should return serialized relationship data and populated included for a to one populated relationship', function(done) {
-      const included = [];
+      const included = new Map();
       const serializedRelationshipData = Serializer.serializeRelationship('authors', 'default', {
         id: '1',
         name: 'Author 1',
       }, included);
       expect(serializedRelationshipData).to.have.property('type').to.eql('authors');
       expect(serializedRelationshipData).to.have.property('id').to.be.a('string').to.eql('1');
-      expect(included).to.have.lengthOf(1);
+      expect([...included.values()]).to.have.lengthOf(1);
       done();
     });
 
     it('should return serialized relationship data and populated included for a to many populated relationships', function(done) {
-      const included = [];
+      const included = new Map();
       const serializedRelationshipData = Serializer.serializeRelationship('authors', 'default', [{
         id: '1',
         name: 'Author 1',
@@ -354,51 +351,49 @@ describe('JSONAPISerializer', function() {
       expect(serializedRelationshipData[0]).to.have.property('id').to.be.a('string').to.eql('1');
       expect(serializedRelationshipData[1]).to.have.property('type').to.eql('authors');
       expect(serializedRelationshipData[1]).to.have.property('id').to.be.a('string').to.eql('2');
-      expect(included).to.have.lengthOf(2);
+      expect([...included.values()]).to.have.lengthOf(2);
       done();
     });
 
     it('should return type of string for a to one populated relationship with non string id', function(done) {
-      const included = [];
       const serializedRelationshipData = Serializer.serializeRelationship('authors', 'default', {
         id: 1
-      }, included);
+      });
       expect(serializedRelationshipData).to.have.property('type').to.eql('authors');
       expect(serializedRelationshipData).to.have.property('id').to.be.a('string').to.eql('1');
       done();
     });
 
     it('should return serialized relationship data and empty included for a to one unpopulated relationship', function(done) {
-      const included = [];
+      const included = new Map();
       const serializedRelationshipData = Serializer.serializeRelationship('authors', 'default', '1', included);
       expect(serializedRelationshipData).to.have.property('type').to.eql('authors');
       expect(serializedRelationshipData).to.have.property('id').to.be.a('string').to.eql('1');
-      expect(included).to.have.lengthOf(0);
+      expect([...included.values()]).to.have.lengthOf(0);
       done();
     });
 
     it('should return serialized relationship data and empty included for a to many unpopulated relationship', function(done) {
-      const included = [];
+      const included = new Map();
       const serializedRelationshipData = Serializer.serializeRelationship('authors', 'default', ['1', '2'], included);
       expect(serializedRelationshipData).to.be.instanceof(Array).to.have.lengthOf(2);
       expect(serializedRelationshipData[0]).to.have.property('type').to.eql('authors');
       expect(serializedRelationshipData[0]).to.have.property('id').to.be.a('string').to.eql('1');
       expect(serializedRelationshipData[1]).to.have.property('type').to.eql('authors');
       expect(serializedRelationshipData[1]).to.have.property('id').to.be.a('string').to.eql('2');
-      expect(included).to.have.lengthOf(0);
+      expect([...included.values()]).to.have.lengthOf(0);
       done();
     });
 
     it('should return type of string for a to one unpopulated relationship with non string id', function(done) {
-      const included = [];
-      const serializedRelationshipData = Serializer.serializeRelationship('authors', 'default', 1, included);
+      const serializedRelationshipData = Serializer.serializeRelationship('authors', 'default', 1);
       expect(serializedRelationshipData).to.have.property('type').to.eql('authors');
       expect(serializedRelationshipData).to.have.property('id').to.be.a('string').to.eql('1');
       done();
     });
 
     it('should return serialized relationship with unpopulated relationship with mongoDB BSON ObjectID', function(done) {
-      const serializedRelationshipData = Serializer.serializeRelationship('authors', 'default', new ObjectID(), []);
+      const serializedRelationshipData = Serializer.serializeRelationship('authors', 'default', new ObjectID());
       expect(serializedRelationshipData).to.have.property('type').to.eql('authors');
       expect(serializedRelationshipData).to.have.property('id').to.be.a('string');
       done();
@@ -411,12 +406,14 @@ describe('JSONAPISerializer', function() {
         whitelist: ['name']
       });
 
-      const included = [];
+      let included = new Map();
       const serializedRelationshipData = Serializer2.serializeRelationship('authors', 'only-name', {
         id: '1',
         name: 'Author 1',
         gender: 'male'
       }, included);
+      
+      included = [...included.values()];
       expect(serializedRelationshipData).to.have.property('type').to.eql('authors');
       expect(serializedRelationshipData).to.have.property('id').to.eql('1');
       expect(included).to.have.lengthOf(1);
@@ -429,7 +426,7 @@ describe('JSONAPISerializer', function() {
     });
 
     it('should serialize relationship with dynamic type', function(done) {
-      const included = [];
+      const included = new Map();
       const typeFn = (data) => data.type;
 
       const Serializer = new JSONAPISerializer();
@@ -452,7 +449,7 @@ describe('JSONAPISerializer', function() {
         { type: 'people', id: '1' },
         { type: 'author', id: '1' }
       ]);
-      expect(included).to.deep.equal([
+      expect([...included.values()]).to.deep.equal([
       {
         type: 'people',
         id: '1',
@@ -486,20 +483,18 @@ describe('JSONAPISerializer', function() {
     });
 
     it('should return undefined relationships for no relationships options', function(done) {
-      const included = [];
       const serializedRelationships = Serializer.serializeRelationships({
         id: '1',
         name: 'Author 1',
-      }, Serializer.schemas.authors.default, included);
+      }, Serializer.schemas.authors.default);
       expect(serializedRelationships).to.be.undefined;
       done();
     });
 
     it('should return at least data null if no links, data, or meta are deduce', function(done) {
-      const included = [];
       const serializedRelationships = Serializer.serializeRelationships({
         id: '1',
-      }, Serializer.schemas.articles.default, included);
+      }, Serializer.schemas.articles.default);
       expect(serializedRelationships).to.eql({
         author: {
           data: null
@@ -512,7 +507,6 @@ describe('JSONAPISerializer', function() {
     });
 
     it('should return relationships for author and comments', function(done) {
-      const included = [];
       const serializedRelationships = Serializer.serializeRelationships({
         id: '1',
         author: {
@@ -523,7 +517,7 @@ describe('JSONAPISerializer', function() {
         }, {
           id: '2'
         }],
-      }, Serializer.schemas.articles.default, included);
+      }, Serializer.schemas.articles.default);
       expect(serializedRelationships).to.have.property('author');
       expect(serializedRelationships.author).to.have.property('data');
       expect(serializedRelationships.author.data).to.have.property('type').to.eql('authors');
@@ -548,19 +542,18 @@ describe('JSONAPISerializer', function() {
           }
         }
       });
-      const included = [];
+
       const serializedRelationships = Serializer.serializeRelationships({
         id: '1',
         articleAuthors: {
           id: '1'
         },
-      }, Serializer.schemas.articles.default, included);
+      }, Serializer.schemas.articles.default);
       expect(serializedRelationships).to.have.property('article-authors');
       done();
     });
 
     it('should return relationships with alternativeKey option if relationship key not exist', function(done) {
-      const included = [];
       const Serializer = new JSONAPISerializer();
 
       Serializer.register('article', {
@@ -576,7 +569,7 @@ describe('JSONAPISerializer', function() {
       const serializedRelationships = Serializer.serializeRelationships({
         id: '1',
         author_id: '1'
-      }, Serializer.schemas.article.default, included);
+      }, Serializer.schemas.article.default);
       expect(serializedRelationships).to.have.property('author');
       expect(serializedRelationships.author).to.have.property('data');
       expect(serializedRelationships.author.data).to.have.property('type').to.eql('people');
@@ -737,79 +730,6 @@ describe('JSONAPISerializer', function() {
     });
   });
 
-  describe('serializeIncluded', function() {
-    const Serializer = new JSONAPISerializer();
-    it('should return undefined for empty included', function(done) {
-      const serializedIncluded = Serializer.serializeIncluded([]);
-      expect(serializedIncluded).to.be.undefined;
-      done();
-    });
-
-    it('should return unique values', function(done) {
-      const included = [{
-        type: 'author',
-        id: '1',
-        name: 'Author 1',
-      }, {
-        type: 'author',
-        id: '1',
-        name: 'Author 1',
-      }];
-      const serializedIncluded = Serializer.serializeIncluded(included);
-      expect(serializedIncluded).to.have.lengthOf(1);
-      done();
-    });
-  });
-
-  describe('serializeIncludedAsync', function() {
-    const Serializer = new JSONAPISerializer();
-
-    it('should return a Promise', () => {
-      const promise = Serializer.serializeIncludedAsync([]);
-      expect(promise).to.be.instanceOf(Promise);
-    });
-
-    it('should return undefined for empty included', () =>
-      Serializer.serializeIncludedAsync([])
-        .then((serializedIncluded) => {
-          expect(serializedIncluded).to.be.undefined;
-        })
-    );
-
-    it('should return unique values', () => {
-      const included = [{
-        type: 'author',
-        id: '1',
-        name: 'Author 1',
-      }, {
-        type: 'author',
-        id: '1',
-        name: 'Author 1',
-      }];
-      return Serializer.serializeIncludedAsync(included)
-        .then((serializedIncluded) => {
-          expect(serializedIncluded).to.have.lengthOf(1);
-        })
-    });
-
-    it('should serialize each array item on next tick', () => {
-      const included = [{
-        type: 'author',
-        id: '1',
-        name: 'Author 1',
-      }, {
-        type: 'author',
-        id: '1',
-        name: 'Author 1',
-      }];
-      const tickCounter = new TickCounter(5);
-      return Serializer.serializeIncludedAsync(included)
-        .then(() => {
-          expect(tickCounter.ticks).to.eql(3);
-        })
-    });
-  });
-
   describe('processOptionsValues', function() {
 
     const Serializer = new JSONAPISerializer();
@@ -956,7 +876,7 @@ describe('JSONAPISerializer', function() {
     it('should throw an error when serializing mixed data with a bad dynamic type option', function(done) {
       expect(function() {
         Serializer.serialize({bad: 'bad'}, {});
-      }).to.throw(Error, 'ValidationError');
+      }).to.throw(Error, 'option `type` is required on a dynamic type object');
       done();
     });
 
@@ -1138,7 +1058,7 @@ describe('JSONAPISerializer', function() {
     it('should throw an error when serializing mixed data with a bad dynamic type option', function(done) {
       expect(function() {
         Serializer.serializeAsync({bad: 'bad'}, {});
-      }).to.throw(Error, 'ValidationError');
+      }).to.throw(Error, 'option `type` is required on a dynamic type object');
       done();
     });
 
@@ -1783,6 +1703,21 @@ describe('JSONAPISerializer', function() {
       done();
     });
 
+    it('should throw an error if no type can be resolved from data', function(done) {
+      const singleData = {
+        data: {
+          id: '1'
+        }
+      };
+      const typeOption = {type: 'type'};
+
+      Serializer.deserializeAsync(typeOption, singleData)
+      .catch(err => {
+        expect(err).to.be.a('error');
+      })
+      .finally(done)
+    });
+
     it('should deserialize mixed data with a dynamic type option as the first argument', () => {
       const data = {
         data: {
@@ -1931,36 +1866,112 @@ describe('JSONAPISerializer', function() {
       done();
     });
 
-    it('should return a validation error when serializing error with a malformed JSON API error object', function(done) {
+    it('should return a error with bad input', function(done) {
+      const jsonapiError = 'error';
+
+      expect(function() {
+        Serializer.serializeError(jsonapiError);
+      }).to.throw(Error, 'error should be an object');
+      
+      done();
+    });
+
+    it('should return a validation error with bad source', function(done) {
       const jsonapiError = {
-        status: '422',
         source: 'malformed attribute'
+      };
+
+      const jsonapiError2 = {
+        source: {
+          pointer : {}
+        }
+      };
+
+      const jsonapiError3 = {
+        source: {
+          parameter : {}
+        }
       };
 
       expect(function() {
         Serializer.serializeError(jsonapiError);
-      }).to.throw(Error);
+      }).to.throw(Error, 'error `source` property should be an object');
+
+      expect(function() {
+        Serializer.serializeError(jsonapiError2);
+      }).to.throw(Error, 'error `source.pointer` property must be a string');
+
+      expect(function() {
+        Serializer.serializeError(jsonapiError3);
+      }).to.throw(Error, 'error `source.parameter` property must be a string');
+      
+      done();
+    });
+
+    it('should return a validation error with bad links', function(done) {
+      const jsonapiErrorBadLink1 = {
+        links: 'malformed attribute'
+      };
+
+      const jsonapiErrorBadLink2 = {
+        links: {
+          self: {href: {}}
+        }
+      }
+
+      const jsonapiErrorBadLink3 = {
+        links: {
+          self: {
+            meta: 'test'
+          }
+        }
+      };
+
+      const jsonapiErrorBadLink4 = {
+        links: {
+          self: true
+        }
+      };
+
+      expect(function() {
+        Serializer.serializeError(jsonapiErrorBadLink1);
+      }).to.throw(Error, 'error `link` property should be an object');
+
+      expect(function() {
+        Serializer.serializeError(jsonapiErrorBadLink2);
+      }).to.throw(Error, 'links.self.href` property should be a string');
+
+      expect(function() {
+        Serializer.serializeError(jsonapiErrorBadLink3);
+      }).to.throw(Error, '`links.self.meta` property should be an object');
+      
+      expect(function() {
+        Serializer.serializeError(jsonapiErrorBadLink4);
+      }).to.throw(Error, 'error `links.self` should be a string or an object');
       
       done();
     });
 
     it('should return serialized error with a JSON API error object', function(done) {
       const jsonapiError = {
+        id: '1',
         status: '422',
-        source: { pointer: '/data/attributes/error' },
+        links: {
+          about: {
+            href: '/path/to/about'
+          }
+        },
+        code: '1',
         title: 'Error',
-        detail: 'An error occured'
+        detail: 'An error occured',
+        source: { pointer: '/data/attributes/error' },
+        meta: {}
       };
 
       const serializedError = Serializer.serializeError(jsonapiError);
 
       expect(serializedError).to.have.property('errors').to.be.instanceof(Array).to.have.lengthOf(1);
-      expect(serializedError.errors[0]).to.deep.eql({
-        status: '422',
-        source: { pointer: '/data/attributes/error' },
-        title: 'Error',
-        detail: 'An error occured'
-      });
+      expect(serializedError.errors[0]).to.deep.eql(jsonapiError);
       
       done();
     });
@@ -1994,6 +2005,255 @@ describe('JSONAPISerializer', function() {
       }]);
       
       done();
+    });
+  })
+
+  describe('validateDynamicTypeOptions', function() {
+    const Serializer = new JSONAPISerializer();
+
+    it('no type provided', (done) => {
+      expect(function() {
+        Serializer.validateDynamicTypeOptions({})
+      }).to.throw(Error, 'option `type` is required on a dynamic type object');
+      
+      done();    
+    });
+
+    it('incorrect type', (done) => {
+      expect(function() {
+        Serializer.validateDynamicTypeOptions({type: {}})
+      }).to.throw(Error, 'should be a string or a function on a dynamic type object');
+      
+      done();
+    });
+
+    it('incorrect jsonapiObject', (done) => {
+      expect(function() {
+        Serializer.validateDynamicTypeOptions({type: 'test', jsonapiObject: {}})
+      }).to.throw(Error, 'option `jsonapiObject` should a Boolean');
+      
+      done();
+    });
+
+    it('incorrect topLevelLinks', (done) => {
+      expect(function() {
+        Serializer.validateDynamicTypeOptions({type: 'test', topLevelLinks: 'test'})
+      }).to.throw(Error, 'option `topLevelLinks` should be an object or a function');
+      
+      done();
+    });
+
+    it('incorrect topLevelMeta', (done) => {
+      expect(function() {
+        Serializer.validateDynamicTypeOptions({type: 'test', topLevelMeta: 'test'})
+      }).to.throw(Error, 'option `topLevelMeta` should be an object or a function');
+      
+      done();
+    });
+  })
+
+  describe('validateOptions', function() {
+    const Serializer = new JSONAPISerializer();
+
+    it('incorrect blacklist', (done) => {
+      expect(function() {
+        Serializer.validateOptions({
+          blacklist: {}
+        })
+      }).to.throw(Error, 'option `blacklist` must be an Array');
+      
+      done();    
+    });
+
+    it('incorrect whitelist', (done) => {
+      expect(function() {
+        Serializer.validateOptions({
+          whitelist: {}
+        })
+      }).to.throw(Error, 'option `whitelist` must be an Array');
+      
+      done();    
+    });
+
+    it('incorrect links', (done) => {
+      expect(function() {
+        Serializer.validateOptions({
+          links: 'test'
+        })
+      }).to.throw(Error, 'option `links` must be an object or a function');
+      
+      done();    
+    });
+
+    it('incorrect blacklistOnDeserialize', (done) => {
+      expect(function() {
+        Serializer.validateOptions({
+          blacklistOnDeserialize: {}
+        })
+      }).to.throw(Error, 'option `blacklistOnDeserialize` must be an Array');
+      
+      done();    
+    });
+
+    it('incorrect whitelistOnDeserialize', (done) => {
+      expect(function() {
+        Serializer.validateOptions({
+          whitelistOnDeserialize: {}
+        })
+      }).to.throw(Error, 'option `whitelistOnDeserialize` must be an Array');
+      
+      done();    
+    });
+
+    it('incorrect topLevelLinks', (done) => {
+      expect(function() {
+        Serializer.validateOptions({
+          topLevelLinks: 'test'
+        })
+      }).to.throw(Error, 'option `topLevelLinks` must be an object or a function');
+      
+      done();    
+    });
+
+    it('incorrect topLevelMeta', (done) => {
+      expect(function() {
+        Serializer.validateOptions({
+          topLevelMeta: 'test'
+        })
+      }).to.throw(Error, 'option `topLevelMeta` must be an object or a function');
+      
+      done();    
+    });
+
+    it('incorrect convertCase', (done) => {
+      expect(function() {
+        Serializer.validateOptions({
+          convertCase: 'TOCAMELCASE'
+        })
+      }).to.throw(Error, "option `convertCase` must be one of 'kebab-case', 'snake_case', 'camelCase'");
+      
+      done();    
+    });
+
+    it('incorrect unconvertCase', (done) => {
+      expect(function() {
+        Serializer.validateOptions({
+          unconvertCase: 'TOCAMELCASE'
+        })
+      }).to.throw(Error, "option `unconvertCase` must be one of 'kebab-case', 'snake_case', 'camelCase'");
+      
+      done();    
+    });
+
+    it('incorrect jsonapiObject', (done) => {
+      expect(function() {
+        Serializer.validateOptions({
+          jsonapiObject: {}
+        })
+      }).to.throw(Error, '`jsonapiObject` must a Boolean');
+      
+      done();    
+    });
+
+    it('no type provided on relationship', (done) => {
+      expect(function() {
+        Serializer.validateOptions({
+          relationships: {
+            test: {}
+          }
+        })
+      }).to.throw(Error, 'option `type` for relationship `test` is required');
+      
+      done();    
+    });
+
+    it('incorrect type on relationship', (done) => {
+      expect(function() {
+        Serializer.validateOptions({
+          relationships: {
+            test: {
+              type: {}
+            }
+          }
+        })
+      }).to.throw(Error, 'option `type` for relationship `test` must be a string or a function');
+      
+      done();    
+    });
+
+    it('incorrect schema on relationship', (done) => {
+      expect(function() {
+        Serializer.validateOptions({
+          relationships: {
+            test: {
+              type: 'test',
+              schema: {}
+            }
+          }
+        })
+      }).to.throw(Error, 'option `schema` for relationship `test` should be a string');
+      
+      done();    
+    });
+
+    it('incorrect links on relationship', (done) => {
+      expect(function() {
+        Serializer.validateOptions({
+          relationships: {
+            test: {
+              type: 'test',
+              links: ''
+            }
+          }
+        })
+      }).to.throw(Error, 'option `links` for relationship `test` should be an object or a function');
+      
+      done();    
+    });
+
+    it('incorrect alternativeKey on relationship', (done) => {
+      expect(function() {
+        Serializer.validateOptions({
+          relationships: {
+            test: {
+              type: 'test',
+              alternativeKey: {}
+            }
+          }
+        })
+      }).to.throw(Error, 'option `alternativeKey` for relationship `test` should be a string');
+      
+      done();    
+    });
+
+    it('incorrect meta on relationship', (done) => {
+      expect(function() {
+        Serializer.validateOptions({
+          relationships: {
+            test: {
+              type: 'test',
+              meta: ''
+            }
+          }
+        })
+      }).to.throw(Error, 'option `meta` for relationship `test` should be an object or a function');
+      
+      done();    
+    });
+
+    it('incorrect deserialize on relationship', (done) => {
+      expect(function() {
+        Serializer.validateOptions({
+          relationships: {
+            test: {
+              type: 'test',
+              deserialize: 'test'
+            }
+          }
+        })
+      }).to.throw(Error, 'option `deserialize` for relationship `test` should be a function');
+      
+      done();    
     });
   })
 });
