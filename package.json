@@ -6,7 +6,8 @@
   "scripts": {
     "lint": "./node_modules/.bin/eslint .",
     "test": "./node_modules/.bin/istanbul cover --print both ./node_modules/mocha/bin/_mocha -- -R spec ./test/**/*.js",
-    "coveralls": "cat ./coverage/lcov.info | node ./node_modules/coveralls/bin/coveralls.js"
+    "coveralls": "cat ./coverage/lcov.info | node ./node_modules/coveralls/bin/coveralls.js",
+    "bench": "node benchmark/index.js"
   },
   "keywords": [
     "json",
@@ -22,6 +23,7 @@
     "node": ">= 4.0.0"
   },
   "devDependencies": {
+    "benchmark": "^2.1.4",
     "bson-objectid": "^1.1.4",
     "chai": "^4.1.2",
     "coveralls": "^3.0.1",
