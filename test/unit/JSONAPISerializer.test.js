@@ -1586,6 +1586,42 @@ describe('JSONAPISerializer', function() {
       expect(deserializedData).to.have.property('article_author');
       done();
     });
+    
+    it('should deserialize with \'unconvertCase\' options with \'alternative_key\' relationship', function(done) {
+      const Serializer = new JSONAPISerializer();
+      Serializer.register('articles', {
+        unconvertCase: 'snake_case',
+        relationships: {
+          article_author: {
+            alternativeKey: 'article_author_id',
+            type: 'authors',
+          },
+        }
+      });
+    
+      const data = {
+        data: {
+          type: 'article',
+          id: '1',
+          attributes: {
+            createdAt: '2015-05-22T14:56:29.000Z'
+          },
+          relationships: {
+            articleAuthor: {
+              data: {
+                type: 'people',
+                id: '1'
+              }
+            }
+          }
+        }
+      };
+    
+      const deserializedData = Serializer.deserialize('articles', data);
+      expect(deserializedData).to.have.property('created_at');
+      expect(deserializedData).to.have.property('article_author_id');
+      done();
+    });
 
     it('should deserialize all attributes of data except for blacklisted attributes', function(done) {
       const data = {
