@@ -1750,8 +1750,8 @@ describe('JSONAPISerializer', function() {
       Serializer.deserializeAsync(typeOption, singleData)
       .catch(err => {
         expect(err).to.be.a('error');
+        done()
       })
-      .finally(done)
     });
 
     it('should deserialize mixed data with a dynamic type option as the first argument', () => {
