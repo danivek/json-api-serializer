@@ -1,4 +1,3 @@
-'use strict';
 /* eslint-disable */
 
 const expect = require('chai').expect;
@@ -8,6 +7,7 @@ const ObjectID = require('bson-objectid');
 const TickCounter = require('../helpers/tick-counter');
 
 const JSONAPISerializer = require('../../');
+const validator = require('../../lib/validator');
 
 describe('JSONAPISerializer', function() {
   describe('register', function() {
@@ -16,7 +16,7 @@ describe('JSONAPISerializer', function() {
       Serializer.register('articles');
       expect(Serializer.schemas).to.have.property('articles');
       expect(Serializer.schemas.articles).to.have.property('default');
-      expect(Serializer.schemas.articles.default).to.eql(Serializer.validateOptions({}));
+      expect(Serializer.schemas.articles.default).to.eql(validator.validateOptions({}));
       done();
     });
 
@@ -27,7 +27,7 @@ describe('JSONAPISerializer', function() {
       });
       expect(Serializer.schemas).to.have.property('articles');
       expect(Serializer.schemas.articles).to.have.property('default');
-      expect(Serializer.schemas.articles.default).to.eql(Serializer.validateOptions({
+      expect(Serializer.schemas.articles.default).to.eql(validator.validateOptions({
         id: 'id',
       }));
       expect(Serializer.schemas.articles.default).to.have.property('id').to.eql('id');
@@ -55,19 +55,19 @@ describe('JSONAPISerializer', function() {
     });
   });
 
-  describe('serializeData', function() {
+  describe('serializeResource', function() {
     const Serializer = new JSONAPISerializer();
     Serializer.register('articles');
-    const defaultOptions = Serializer.validateOptions({});
+    const defaultOptions = validator.validateOptions({});
 
     it('should return null for an empty single data', function(done) {
-      const serializedData = Serializer.serializeData('articles', {});
+      const serializedData = Serializer.serializeResource('articles', {});
       expect(serializedData).to.eql(null);
       done();
     });
 
     it('should return empty array for an empty array data', function(done) {
-      const serializedData = Serializer.serializeData('articles', []);
+      const serializedData = Serializer.serializeResource('articles', []);
       expect(serializedData).to.eql([]);
       done();
     });
@@ -77,7 +77,7 @@ describe('JSONAPISerializer', function() {
         id: '1',
         body: 'test body',
       };
-      const serializedData = Serializer.serializeData('articles', singleData, defaultOptions);
+      const serializedData = Serializer.serializeResource('articles', singleData, defaultOptions);
 
       expect(serializedData).to.have.property('type').to.eql('articles');
       expect(serializedData).to.have.property('id').to.eql('1');
@@ -92,7 +92,7 @@ describe('JSONAPISerializer', function() {
       const singleData = {
         id: '1',
       };
-      const serializedData = Serializer.serializeData('articles', singleData, defaultOptions);
+      const serializedData = Serializer.serializeResource('articles', singleData, defaultOptions);
 
       expect(serializedData).to.have.property('type').to.eql('articles');
       expect(serializedData).to.have.property('id').to.eql('1');
@@ -111,7 +111,7 @@ describe('JSONAPISerializer', function() {
         id: '2',
         body: 'test body 2',
       }];
-      const serializedData = Serializer.serializeData('articles', arrayData, defaultOptions);
+      const serializedData = Serializer.serializeResource('articles', arrayData, defaultOptions);
       expect(serializedData).to.be.instanceof(Array).to.have.lengthOf(2);
       expect(serializedData[0]).to.have.property('type').to.eql('articles');
       expect(serializedData[0]).to.have.property('id').to.eql('1');
@@ -130,7 +130,7 @@ describe('JSONAPISerializer', function() {
       const singleData = {
         _id: '1',
       };
-      const serializedData = Serializer.serializeData('articles', singleData, _.merge(defaultOptions, {
+      const serializedData = Serializer.serializeResource('articles', singleData, _.merge(defaultOptions, {
         id: '_id',
       }));
       expect(serializedData).to.have.property('type').to.eql('articles');
@@ -145,7 +145,7 @@ describe('JSONAPISerializer', function() {
       const singleData = {
         id: 1,
       };
-      const serializedData = Serializer.serializeData('articles', singleData, _.merge(defaultOptions, {
+      const serializedData = Serializer.serializeResource('articles', singleData, _.merge(defaultOptions, {
         id: 'id',
       }));
       expect(serializedData).to.have.property('type').to.eql('articles');
@@ -157,28 +157,28 @@ describe('JSONAPISerializer', function() {
       const singleData = {
         body: 'test',
       };
-      const serializedData = Serializer.serializeData('articles', singleData, defaultOptions);
+      const serializedData = Serializer.serializeResource('articles', singleData, defaultOptions);
       expect(serializedData).to.have.property('type').to.eql('articles');
       expect(serializedData.id).to.be.undefined;
       done();
     });
   });
 
-  describe('serializeMixedData', function() {
+  describe('serializeMixedResource', function() {
     const Serializer = new JSONAPISerializer();
     Serializer.register('article');
     Serializer.register('people');
     const typeOption = {type: 'type'};
-    const defaultTypeOption = Serializer.validateDynamicTypeOptions(typeOption);
+    const defaultTypeOption = validator.validateDynamicTypeOptions(typeOption);
 
     it('should return null for an empty single data', function(done) {
-      const serializedData = Serializer.serializeMixedData(defaultTypeOption, {});
+      const serializedData = Serializer.serializeMixedResource(defaultTypeOption, {});
       expect(serializedData).to.eql(null);
       done();
     });
 
     it('should return empty array for an empty array data', function(done) {
-      const serializedData = Serializer.serializeMixedData(defaultTypeOption, []);
+      const serializedData = Serializer.serializeMixedResource(defaultTypeOption, []);
       expect(serializedData).to.eql([]);
       done();
     });
@@ -190,7 +190,7 @@ describe('JSONAPISerializer', function() {
       };
 
       expect(function() {
-        Serializer.serializeMixedData(defaultTypeOption, singleData);
+        Serializer.serializeMixedResource(defaultTypeOption, singleData);
       }).to.throw(Error, 'No type can be resolved from data: {"id":"1","body":"test body"}');
       done();
     });
@@ -203,7 +203,7 @@ describe('JSONAPISerializer', function() {
       };
 
       expect(function() {
-        Serializer.serializeMixedData(defaultTypeOption, singleData);
+        Serializer.serializeMixedResource(defaultTypeOption, singleData);
       }).to.throw(Error, 'No type registered for book');
       done();
     });
@@ -214,7 +214,7 @@ describe('JSONAPISerializer', function() {
         type: 'article',
         body: 'test body',
       };
-      const serializedData = Serializer.serializeMixedData(defaultTypeOption, singleData);
+      const serializedData = Serializer.serializeMixedResource(defaultTypeOption, singleData);
 
       expect(serializedData).to.have.property('type').to.eql('article');
       expect(serializedData).to.have.property('id').to.eql('1');
@@ -235,7 +235,7 @@ describe('JSONAPISerializer', function() {
         type: 'people',
         body: 'people body',
       }];
-      const serializedData = Serializer.serializeMixedData(defaultTypeOption, arrayData);
+      const serializedData = Serializer.serializeMixedResource(defaultTypeOption, arrayData);
       expect(serializedData).to.be.instanceof(Array).to.have.lengthOf(2);
       expect(serializedData[0]).to.have.property('type').to.eql('article');
       expect(serializedData[0]).to.have.property('id').to.eql('1');
@@ -257,8 +257,8 @@ describe('JSONAPISerializer', function() {
         body: 'test body',
       };
       const typeFuncOption = {type: (data) => data.type ? 'article' : ''};
-      const defaultTypeFuncOption = Serializer.validateDynamicTypeOptions(typeFuncOption);
-      const serializedData = Serializer.serializeMixedData(defaultTypeFuncOption, singleData);
+      const defaultTypeFuncOption = validator.validateDynamicTypeOptions(typeFuncOption);
+      const serializedData = Serializer.serializeMixedResource(defaultTypeFuncOption, singleData);
 
       expect(serializedData).to.have.property('type').to.eql('article');
       expect(serializedData).to.have.property('id').to.eql('1');
@@ -876,7 +876,7 @@ describe('JSONAPISerializer', function() {
     it('should throw an error when serializing mixed data with a bad dynamic type option', function(done) {
       expect(function() {
         Serializer.serialize({bad: 'bad'}, {});
-      }).to.throw(Error, 'option `type` is required on a dynamic type object');
+      }).to.throw(Error, 'option \'type\' is required');
       done();
     });
 
@@ -1058,7 +1058,7 @@ describe('JSONAPISerializer', function() {
     it('should throw an error when serializing mixed data with a bad dynamic type option', function(done) {
       expect(function() {
         Serializer.serializeAsync({bad: 'bad'}, {});
-      }).to.throw(Error, 'option `type` is required on a dynamic type object');
+      }).to.throw(Error, 'option \'type\' is required');
       done();
     });
 
@@ -1907,7 +1907,7 @@ describe('JSONAPISerializer', function() {
 
       expect(function() {
         Serializer.serializeError(jsonapiError);
-      }).to.throw(Error, 'error should be an object');
+      }).to.throw(Error, 'error must be an object');
       
       done();
     });
@@ -1931,15 +1931,15 @@ describe('JSONAPISerializer', function() {
 
       expect(function() {
         Serializer.serializeError(jsonapiError);
-      }).to.throw(Error, 'error `source` property should be an object');
+      }).to.throw(Error, 'error \'source\' property must be an object');
 
       expect(function() {
         Serializer.serializeError(jsonapiError2);
-      }).to.throw(Error, 'error `source.pointer` property must be a string');
+      }).to.throw(Error, 'error \'source.pointer\' property must be a string');
 
       expect(function() {
         Serializer.serializeError(jsonapiError3);
-      }).to.throw(Error, 'error `source.parameter` property must be a string');
+      }).to.throw(Error, 'error \'source.parameter\' property must be a string');
       
       done();
     });
@@ -1971,19 +1971,19 @@ describe('JSONAPISerializer', function() {
 
       expect(function() {
         Serializer.serializeError(jsonapiErrorBadLink1);
-      }).to.throw(Error, 'error `link` property should be an object');
+      }).to.throw(Error, 'error \'link\' property must be an object');
 
       expect(function() {
         Serializer.serializeError(jsonapiErrorBadLink2);
-      }).to.throw(Error, 'links.self.href` property should be a string');
+      }).to.throw(Error, '\'links.self.href\' property must be a string');
 
       expect(function() {
         Serializer.serializeError(jsonapiErrorBadLink3);
-      }).to.throw(Error, '`links.self.meta` property should be an object');
+      }).to.throw(Error, '\'links.self.meta\' property must be an object');
       
       expect(function() {
         Serializer.serializeError(jsonapiErrorBadLink4);
-      }).to.throw(Error, 'error `links.self` should be a string or an object');
+      }).to.throw(Error, 'error \'links.self\' must be a string or an object');
       
       done();
     });
@@ -2041,255 +2041,6 @@ describe('JSONAPISerializer', function() {
       }]);
       
       done();
-    });
-  })
-
-  describe('validateDynamicTypeOptions', function() {
-    const Serializer = new JSONAPISerializer();
-
-    it('no type provided', (done) => {
-      expect(function() {
-        Serializer.validateDynamicTypeOptions({})
-      }).to.throw(Error, 'option `type` is required on a dynamic type object');
-      
-      done();    
-    });
-
-    it('incorrect type', (done) => {
-      expect(function() {
-        Serializer.validateDynamicTypeOptions({type: {}})
-      }).to.throw(Error, 'should be a string or a function on a dynamic type object');
-      
-      done();
-    });
-
-    it('incorrect jsonapiObject', (done) => {
-      expect(function() {
-        Serializer.validateDynamicTypeOptions({type: 'test', jsonapiObject: {}})
-      }).to.throw(Error, 'option `jsonapiObject` should a Boolean');
-      
-      done();
-    });
-
-    it('incorrect topLevelLinks', (done) => {
-      expect(function() {
-        Serializer.validateDynamicTypeOptions({type: 'test', topLevelLinks: 'test'})
-      }).to.throw(Error, 'option `topLevelLinks` should be an object or a function');
-      
-      done();
-    });
-
-    it('incorrect topLevelMeta', (done) => {
-      expect(function() {
-        Serializer.validateDynamicTypeOptions({type: 'test', topLevelMeta: 'test'})
-      }).to.throw(Error, 'option `topLevelMeta` should be an object or a function');
-      
-      done();
-    });
-  })
-
-  describe('validateOptions', function() {
-    const Serializer = new JSONAPISerializer();
-
-    it('incorrect blacklist', (done) => {
-      expect(function() {
-        Serializer.validateOptions({
-          blacklist: {}
-        })
-      }).to.throw(Error, 'option `blacklist` must be an Array');
-      
-      done();    
-    });
-
-    it('incorrect whitelist', (done) => {
-      expect(function() {
-        Serializer.validateOptions({
-          whitelist: {}
-        })
-      }).to.throw(Error, 'option `whitelist` must be an Array');
-      
-      done();    
-    });
-
-    it('incorrect links', (done) => {
-      expect(function() {
-        Serializer.validateOptions({
-          links: 'test'
-        })
-      }).to.throw(Error, 'option `links` must be an object or a function');
-      
-      done();    
-    });
-
-    it('incorrect blacklistOnDeserialize', (done) => {
-      expect(function() {
-        Serializer.validateOptions({
-          blacklistOnDeserialize: {}
-        })
-      }).to.throw(Error, 'option `blacklistOnDeserialize` must be an Array');
-      
-      done();    
-    });
-
-    it('incorrect whitelistOnDeserialize', (done) => {
-      expect(function() {
-        Serializer.validateOptions({
-          whitelistOnDeserialize: {}
-        })
-      }).to.throw(Error, 'option `whitelistOnDeserialize` must be an Array');
-      
-      done();    
-    });
-
-    it('incorrect topLevelLinks', (done) => {
-      expect(function() {
-        Serializer.validateOptions({
-          topLevelLinks: 'test'
-        })
-      }).to.throw(Error, 'option `topLevelLinks` must be an object or a function');
-      
-      done();    
-    });
-
-    it('incorrect topLevelMeta', (done) => {
-      expect(function() {
-        Serializer.validateOptions({
-          topLevelMeta: 'test'
-        })
-      }).to.throw(Error, 'option `topLevelMeta` must be an object or a function');
-      
-      done();    
-    });
-
-    it('incorrect convertCase', (done) => {
-      expect(function() {
-        Serializer.validateOptions({
-          convertCase: 'TOCAMELCASE'
-        })
-      }).to.throw(Error, "option `convertCase` must be one of 'kebab-case', 'snake_case', 'camelCase'");
-      
-      done();    
-    });
-
-    it('incorrect unconvertCase', (done) => {
-      expect(function() {
-        Serializer.validateOptions({
-          unconvertCase: 'TOCAMELCASE'
-        })
-      }).to.throw(Error, "option `unconvertCase` must be one of 'kebab-case', 'snake_case', 'camelCase'");
-      
-      done();    
-    });
-
-    it('incorrect jsonapiObject', (done) => {
-      expect(function() {
-        Serializer.validateOptions({
-          jsonapiObject: {}
-        })
-      }).to.throw(Error, '`jsonapiObject` must a Boolean');
-      
-      done();    
-    });
-
-    it('no type provided on relationship', (done) => {
-      expect(function() {
-        Serializer.validateOptions({
-          relationships: {
-            test: {}
-          }
-        })
-      }).to.throw(Error, 'option `type` for relationship `test` is required');
-      
-      done();    
-    });
-
-    it('incorrect type on relationship', (done) => {
-      expect(function() {
-        Serializer.validateOptions({
-          relationships: {
-            test: {
-              type: {}
-            }
-          }
-        })
-      }).to.throw(Error, 'option `type` for relationship `test` must be a string or a function');
-      
-      done();    
-    });
-
-    it('incorrect schema on relationship', (done) => {
-      expect(function() {
-        Serializer.validateOptions({
-          relationships: {
-            test: {
-              type: 'test',
-              schema: {}
-            }
-          }
-        })
-      }).to.throw(Error, 'option `schema` for relationship `test` should be a string');
-      
-      done();    
-    });
-
-    it('incorrect links on relationship', (done) => {
-      expect(function() {
-        Serializer.validateOptions({
-          relationships: {
-            test: {
-              type: 'test',
-              links: ''
-            }
-          }
-        })
-      }).to.throw(Error, 'option `links` for relationship `test` should be an object or a function');
-      
-      done();    
-    });
-
-    it('incorrect alternativeKey on relationship', (done) => {
-      expect(function() {
-        Serializer.validateOptions({
-          relationships: {
-            test: {
-              type: 'test',
-              alternativeKey: {}
-            }
-          }
-        })
-      }).to.throw(Error, 'option `alternativeKey` for relationship `test` should be a string');
-      
-      done();    
-    });
-
-    it('incorrect meta on relationship', (done) => {
-      expect(function() {
-        Serializer.validateOptions({
-          relationships: {
-            test: {
-              type: 'test',
-              meta: ''
-            }
-          }
-        })
-      }).to.throw(Error, 'option `meta` for relationship `test` should be an object or a function');
-      
-      done();    
-    });
-
-    it('incorrect deserialize on relationship', (done) => {
-      expect(function() {
-        Serializer.validateOptions({
-          relationships: {
-            test: {
-              type: 'test',
-              deserialize: 'test'
-            }
-          }
-        })
-      }).to.throw(Error, 'option `deserialize` for relationship `test` should be a function');
-      
-      done();    
     });
   })
 });
