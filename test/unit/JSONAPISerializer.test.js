@@ -458,13 +458,15 @@ describe('JSONAPISerializer', function() {
         id: '1',
         attributes: { type: 'people', name: 'Roman Nelson' },
         relationships: undefined,
-        links: undefined
+        links: undefined,
+        meta: undefined
       }, {
         type: 'author',
         id: '1',
         attributes: { type: 'author', firstName: 'Kaley', lastName: 'Maggio' },
         relationships: undefined,
-        links: undefined }
+        links: undefined,
+        meta: undefined }
       ]);
       done();
     });
@@ -1586,7 +1588,7 @@ describe('JSONAPISerializer', function() {
       expect(deserializedData).to.have.property('article_author');
       done();
     });
-    
+
     it('should deserialize with \'unconvertCase\' options with \'alternative_key\' relationship', function(done) {
       const Serializer = new JSONAPISerializer();
       Serializer.register('articles', {
@@ -1598,7 +1600,7 @@ describe('JSONAPISerializer', function() {
           },
         }
       });
-    
+
       const data = {
         data: {
           type: 'article',
@@ -1616,7 +1618,7 @@ describe('JSONAPISerializer', function() {
           }
         }
       };
-    
+
       const deserializedData = Serializer.deserialize('articles', data);
       expect(deserializedData).to.have.property('created_at');
       expect(deserializedData).to.have.property('article_author_id');
@@ -1951,7 +1953,7 @@ describe('JSONAPISerializer', function() {
       expect(serializedError.errors[0]).to.have.property('status').to.eql('500');
       expect(serializedError.errors[0]).to.have.property('code').to.eql('ERROR');
       expect(serializedError.errors[0]).to.have.property('detail').to.eql('An error occured');
-      
+
       done();
     });
 
@@ -1963,7 +1965,7 @@ describe('JSONAPISerializer', function() {
       expect(serializedErrors).to.have.property('errors').to.be.instanceof(Array).to.have.lengthOf(2);
       expect(serializedErrors.errors[0]).to.have.property('detail').to.eql('First Error');
       expect(serializedErrors.errors[1]).to.have.property('detail').to.eql('Second Error');
-      
+
       done();
     });
 
@@ -1976,7 +1978,7 @@ describe('JSONAPISerializer', function() {
       expect(function() {
         Serializer.serializeError(jsonapiError);
       }).to.throw(Error);
-      
+
       done();
     });
 
@@ -1997,7 +1999,7 @@ describe('JSONAPISerializer', function() {
         title: 'Error',
         detail: 'An error occured'
       });
-      
+
       done();
     });
 
@@ -2028,7 +2030,7 @@ describe('JSONAPISerializer', function() {
         title: 'Second Error',
         detail: 'Second Error'
       }]);
-      
+
       done();
     });
   })
