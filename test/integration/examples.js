@@ -16,6 +16,11 @@ describe('Examples', function() {
         self: '/articles/' + data.id
       }
     },
+    meta: function(data) {
+      return {
+        meta: 'metadata'
+      }
+    },
     relationships: {
       author: {
         type: 'people',
@@ -109,6 +114,7 @@ describe('Examples', function() {
     expect(serializedData.data[0].relationships.comments.data[0]).to.have.property('id').to.be.a('string');
     expect(serializedData.data[0]).to.have.property('links');
     expect(serializedData.data[0].links).to.have.property('self').to.eql('/articles/1');
+    expect(serializedData.data[0].meta).to.have.property('meta').to.eql('metadata');
     expect(serializedData).to.have.property('included');
     expect(serializedData.included).to.be.instanceof(Array).to.have.lengthOf(10);
     var includedAuhor1 = _.find(serializedData.included, {

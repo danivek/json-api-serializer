@@ -84,6 +84,7 @@ describe('JSONAPISerializer', function() {
       expect(serializedData).to.have.property('attributes').to.have.property('body').to.eql('test body');
       expect(serializedData.relationships).to.be.undefined;
       expect(serializedData.links).to.be.undefined;
+      expect(serializedData.meta).to.be.undefined;
 
       done();
     });
@@ -99,6 +100,7 @@ describe('JSONAPISerializer', function() {
       expect(serializedData.attributes).to.be.undefined;
       expect(serializedData.relationships).to.be.undefined;
       expect(serializedData.links).to.be.undefined;
+      expect(serializedData.meta).to.be.undefined;
 
       done();
     });
@@ -118,11 +120,13 @@ describe('JSONAPISerializer', function() {
       expect(serializedData[0]).to.have.property('attributes').to.have.property('body').to.eql('test body 1');
       expect(serializedData[0].relationships).to.be.undefined;
       expect(serializedData[0].links).to.be.undefined;
+      expect(serializedData[0].meta).to.be.undefined;
       expect(serializedData[1]).to.have.property('type').to.eql('articles');
       expect(serializedData[1]).to.have.property('id').to.eql('2');
       expect(serializedData[1]).to.have.property('attributes').to.have.property('body').to.eql('test body 2');
       expect(serializedData[1].relationships).to.be.undefined;
       expect(serializedData[1].links).to.be.undefined;
+      expect(serializedData[1].meta).to.be.undefined;
       done();
     });
 
@@ -137,6 +141,7 @@ describe('JSONAPISerializer', function() {
       expect(serializedData).to.have.property('id').to.eql('1');
       expect(serializedData.relationships).to.be.undefined;
       expect(serializedData.links).to.be.undefined;
+      expect(serializedData.meta).to.be.undefined;
 
       done();
     });
@@ -221,6 +226,7 @@ describe('JSONAPISerializer', function() {
       expect(serializedData).to.have.property('attributes').to.have.property('body').to.eql('test body');
       expect(serializedData.relationships).to.be.undefined;
       expect(serializedData.links).to.be.undefined;
+      expect(serializedData.meta).to.be.undefined;
 
       done();
     });
@@ -242,11 +248,13 @@ describe('JSONAPISerializer', function() {
       expect(serializedData[0]).to.have.property('attributes').to.have.property('body').to.eql('article body');
       expect(serializedData[0].relationships).to.be.undefined;
       expect(serializedData[0].links).to.be.undefined;
+      expect(serializedData[0].meta).to.be.undefined;
       expect(serializedData[1]).to.have.property('type').to.eql('people');
       expect(serializedData[1]).to.have.property('id').to.eql('1');
       expect(serializedData[1]).to.have.property('attributes').to.have.property('body').to.eql('people body');
       expect(serializedData[1].relationships).to.be.undefined;
       expect(serializedData[1].links).to.be.undefined;
+      expect(serializedData[1].meta).to.be.undefined;
       done();
     });
 
@@ -455,12 +463,14 @@ describe('JSONAPISerializer', function() {
         id: '1',
         attributes: { type: 'people', name: 'Roman Nelson' },
         relationships: undefined,
+        meta: undefined,
         links: undefined
       }, {
         type: 'author',
         id: '1',
         attributes: { type: 'author', firstName: 'Kaley', lastName: 'Maggio' },
         relationships: undefined,
+        meta: undefined,
         links: undefined }
       ]);
       done();

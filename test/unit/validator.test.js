@@ -44,6 +44,14 @@ describe('validator', function() {
 
       done();
     });
+
+    it('incorrect meta', done => {
+      expect(function() {
+        validator.validateDynamicTypeOptions({ type: 'test', meta: 'test' });
+      }).to.throw(Error, "option 'meta' must be an object or a function");
+
+      done();
+    });
   });
 
   describe('validateOptions', function() {
@@ -73,6 +81,16 @@ describe('validator', function() {
           links: 'test'
         });
       }).to.throw(Error, "option 'links' must be an object or a function");
+
+      done();
+    });
+
+    it('incorrect meta', done => {
+      expect(function() {
+        validator.validateOptions({
+          meta: 'test'
+        });
+      }).to.throw(Error, "option 'meta' must be an object or a function");
 
       done();
     });

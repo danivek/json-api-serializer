@@ -37,6 +37,9 @@ Serializer.register(type, options);
 * **topLevelLinks** (optional): Describes the top-level links. It can be:
   * An _object_ (values can be string or function).
   * A _function_ with one argument `function(extraData) { ... }` or with two arguments `function(data, extraData) { ... }`
+* **meta** (optional): Describes resource-level meta. It can be:
+  * An _object_ (values can be string or function).
+  * A _function_ with one argument `function(data) { ... }` or with two arguments `function(data, extraData) { ... }`
 * **relationships** (optional): An object defining some relationships
   * relationship: The property in data to use as a relationship
     * **type**: A _string_ or a _function_ `function(relationshipData, data) { ... }` for the type to use for serializing the relationship (type need to be register).
