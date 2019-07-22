@@ -6,10 +6,6 @@
 
 A Node.js framework agnostic library for serializing your data to [JSON API](http://jsonapi.org/) compliant responses (a specification for building APIs in JSON).
 
-**_Why another library for serializing data to JSON API ?_**
-
-Simply because others libraries are not as flexible as i need.
-
 ## Installation
 
 ```bash
@@ -501,17 +497,13 @@ Intel(R) Core(TM) i7-4770HQ CPU @ 2.20GHz × 8
 
 Suite:
 ==============
-serializeAsync x 5,154 ops/sec ±9.10% (72 runs sampled)
-serialize (sync) x 28,150 ops/sec ±1.22% (86 runs sampled)
-deserializeAsync x 49,116 ops/sec ±1.80% (81 runs sampled)
-deserialize x 148,658 ops/sec ±1.26% (92 runs sampled)
-serializeError x 281,786 ops/sec ±0.99% (90 runs sampled)
-serializeError with a JSON API error object x 10,637 ops/sec ±2.82% (85 runs sampled)
+serializeAsync x 64,411 ops/sec ±0.59% (82 runs sampled)
+serialize x 150,408 ops/sec ±0.63% (93 runs sampled)
+deserializeAsync x 111,881 ops/sec ±0.31% (84 runs sampled)
+deserialize x 445,711 ops/sec ±0.29% (94 runs sampled)
+serializeError x 294,273 ops/sec ±0.79% (90 runs sampled)
+serializeError with a JSON API error object x 16,864,514 ops/sec ±0.32% (93 runs sampled)
 ```
-
-## Requirements
-
-json-api-serializer only use ECMAScript 2015 (ES6) features supported natively by Node.js 4 and above ([ECMAScript 2015 (ES6) | Node.js](https://nodejs.org/en/docs/es6/)). Make sure that you have Node.js 4+ or above.
 
 ## License
 
