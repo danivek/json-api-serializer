@@ -1,6 +1,8 @@
 {
   "extends": [
-    "airbnb-base"
+    "eslint:recommended",
+    "airbnb-base",
+    "plugin:prettier/recommended"
   ],
   "parserOptions": {
     "ecmaVersion": 6
@@ -10,13 +12,9 @@
     "mocha": true
   },
   "rules": {
-    "strict": 0,
-    "no-param-reassign": 0,
-    "max-len": [2, 200, 4, {
-      "ignoreComments": true,
-      "ignoreUrls": true
-    }],
+    "prettier/prettier": ["error", { "singleQuote": true, "printWidth": 100 }],
     "no-underscore-dangle": 0,
+    "no-param-reassign": 0,
     "class-methods-use-this": 0
   }
 }

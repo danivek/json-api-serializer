@@ -1,4 +1,3 @@
-'use strict';
 /* eslint-disable */
 
 const expect = require('chai').expect;
