@@ -810,6 +810,15 @@ describe('JSONAPISerializer', function() {
       expect(links).to.have.property('self').to.eql('/articles');
       done();
     });
+
+    it('should process options with a function returning null or undefined', function(done) {
+      const optionsFn = function(extraData) {
+        return null;
+      };
+      const links = Serializer.processOptionsValues({ id: '1' }, { url : '/articles' }, optionsFn, 'extraData');
+      expect(links).to.be.undefined;
+      done();
+    });
   });
 
   describe('serialize', function() {
