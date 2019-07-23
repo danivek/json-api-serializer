@@ -3,9 +3,11 @@
   "version": "2.0.1",
   "description": "Framework agnostic JSON API serializer.",
   "main": "index.js",
+  "module": "dist/json-api-serializer.esm.js",
   "scripts": {
     "lint": "./node_modules/.bin/eslint .",
     "test": "./node_modules/.bin/istanbul cover --print both ./node_modules/mocha/bin/_mocha -- -R spec ./test/**/*.js",
+    "build": "rollup -c",
     "coveralls": "cat ./coverage/lcov.info | node ./node_modules/coveralls/bin/coveralls.js",
     "bench": "node benchmark/index.js"
   },
@@ -23,6 +25,8 @@
     "node": ">= 4.0.0"
   },
   "devDependencies": {
+    "@babel/preset-env": "^7.5.5",
+    "@babel/core": "^7.5.5",
     "benchmark": "^2.1.4",
     "bson-objectid": "^1.1.4",
     "chai": "^4.1.2",
@@ -34,10 +38,15 @@
     "eslint-plugin-prettier": "^3.0.1",
     "istanbul": "^0.4.2",
     "mocha": "^5.2.0",
-    "prettier": "^1.17.0"
+    "prettier": "^1.17.0",
+    "rollup": "^1.17.0",
+    "rollup-plugin-babel": "^4.3.3",
+    "rollup-plugin-uglify": "^6.0.2",
+    "rollup-plugin-commonjs": "^10.0.1",
+    "rollup-plugin-node-resolve": "^5.2.0"
   },
   "dependencies": {
-    "30-seconds-of-code": "^1.2.3",
-    "lodash.set": "^4.3.2"
+    "lodash.set": "^4.3.2",
+    "setimmediate": "^1.0.5"
   }
 }
