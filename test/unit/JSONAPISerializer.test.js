@@ -2062,4 +2062,50 @@ describe('JSONAPISerializer', function() {
       done();
     });
   })
+
+ describe('convertCase', function() {
+  it('should convert an array of object to kebab-case', function() {
+    const jsonapiSerializer = new JSONAPISerializer();
+    const converted = jsonapiSerializer._convertCase(
+      [{
+        arrayOfObject: [
+          {
+            firstProperty: 'test',
+            secondProperty: null,
+            thirdProperty: 0
+          }
+        ],
+        arrayOfNumber: [1, 2, 3, 4, 5]
+      }],
+      'kebab-case'
+    );
+    
+    expect(converted).to.deep.equal([{
+      'array-of-object': [{ 'first-property': 'test', 'second-property': null, 'third-property': 0 }],
+      'array-of-number': [1, 2, 3, 4, 5]
+    }]);
+  });
+
+  it('should convert an object to kebab-case', function() {
+    const jsonapiSerializer = new JSONAPISerializer();
+    const converted = jsonapiSerializer._convertCase(
+      {
+        arrayOfObject: [
+          {
+            firstProperty: 'test',
+            secondProperty: null,
+            thirdProperty: 0
+          }
+        ],
+        arrayOfNumber: [1, 2, 3, 4, 5]
+      },
+      'kebab-case'
+    );
+      
+    expect(converted).to.deep.equal({
+      'array-of-object': [{ 'first-property': 'test', 'second-property': null, 'third-property': 0 }],
+      'array-of-number': [1, 2, 3, 4, 5]
+    });
+  });
+ }); 
 });
