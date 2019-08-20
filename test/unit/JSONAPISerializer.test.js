@@ -2144,15 +2144,15 @@ describe('JSONAPISerializer', function() {
             thirdProperty: 0
           }
         ],
-        arrayOfNumber: [1, 2, 3, 4, 5]
+        arrayOfNumber: [1, 2, 3, 4, 5],
+        date: new Date()
       },
       'kebab-case'
     );
       
-    expect(converted).to.deep.equal({
-      'array-of-object': [{ 'first-property': 'test', 'second-property': null, 'third-property': 0 }],
-      'array-of-number': [1, 2, 3, 4, 5]
-    });
+    expect(converted['array-of-object']).to.deep.equal([{ 'first-property': 'test', 'second-property': null, 'third-property': 0 }]);
+    expect(converted['array-of-number']).to.deep.equal([1, 2, 3, 4, 5]);
+    expect(converted.date).to.be.a('Date');
   });
  }); 
 });
