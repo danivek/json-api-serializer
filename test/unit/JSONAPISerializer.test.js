@@ -1693,6 +1693,25 @@ describe('JSONAPISerializer', function() {
       done();
     });
 
+    it('should deserialize with a custom schema', function(done) {
+      const Serializer = new JSONAPISerializer();
+      Serializer.register('articles', 'custom');
+    
+      const data = {
+        data: {
+          type: 'article',
+          id: '1',
+          attributes: {
+            createdAt: '2015-05-22T14:56:29.000Z'
+          }
+        }
+      };
+    
+      const deserializedData = Serializer.deserialize('articles', data, 'custom');
+      expect(deserializedData).to.have.property('createdAt');
+      done();
+    });
+
     it('should throw an error if custom schema has not been registered', function(done) {
       expect(function() {
         const Serializer = new JSONAPISerializer();
@@ -1796,6 +1815,26 @@ describe('JSONAPISerializer', function() {
         Serializer.deserializeAsync('authors', {});
       }).to.throw(Error, 'No type registered for authors');
       done();
+    });
+
+    it('should deserialize with a custom schema', function(done) {
+      const Serializer = new JSONAPISerializer();
+      Serializer.register('articles', 'custom');
+    
+      const data = {
+        data: {
+          type: 'article',
+          id: '1',
+          attributes: {
+            createdAt: '2015-05-22T14:56:29.000Z'
+          }
+        }
+      };
+    
+      Serializer.deserializeAsync('articles', data, 'custom').then((deserializedData) => {
+        expect(deserializedData).to.have.property('createdAt');
+        done();
+      });
     });
 
     it('should throw an error if custom schema has not been registered', function(done) {
