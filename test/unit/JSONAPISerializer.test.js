@@ -1565,7 +1565,7 @@ describe('JSONAPISerializer', function() {
       done();
     });
 
-    it('should deserialize all attributes of data except for blacklisted attributes', function(done) {
+    it('should deserialize all attributes of data except for blacklisted attributes (including \'id\')', function(done) {
       const data = {
         data: {
           type: 'article',
@@ -1579,12 +1579,13 @@ describe('JSONAPISerializer', function() {
 
       const Serializer = new JSONAPISerializer();
       Serializer.register('articles', {
-        blacklistOnDeserialize: ['body'],
+        blacklistOnDeserialize: ['body', 'id'],
       });
 
       const deserializedData = Serializer.deserialize('articles', data);
       expect(deserializedData).to.have.property('title');
       expect(deserializedData).to.not.have.property('body');
+      expect(deserializedData).not.to.have.property('id');
       done();
     });
 
