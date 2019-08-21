@@ -501,18 +501,11 @@ describe('JSONAPISerializer', function() {
       done();
     });
 
-    it('should return at least data null if no links, data, or meta are deduce', function(done) {
+    it('should not serialize relationships if no links, data, or meta are deduce', function(done) {
       const serializedRelationships = Serializer.serializeRelationships({
         id: '1',
       }, Serializer.schemas.articles.default);
-      expect(serializedRelationships).to.eql({
-        author: {
-          data: null
-        },
-        comments: {
-          data: null
-        }
-      })
+      expect(serializedRelationships).to.be.undefined;
       done();
     });
 
