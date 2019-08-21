@@ -53,10 +53,12 @@ module.exports = [
     },
     tags: [
       {
-        id: '3'
+        id: '3',
+        title: 'Tag 3'
       },
       {
-        id: '4'
+        id: '4',
+        title: 'Tag 4'
       }
     ],
     photos: [

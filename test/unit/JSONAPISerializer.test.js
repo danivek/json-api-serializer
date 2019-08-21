@@ -400,10 +400,20 @@ describe('JSONAPISerializer', function() {
       done();
     });
 
+    
     it('should return serialized relationship with unpopulated relationship with mongoDB BSON ObjectID', function(done) {
       const serializedRelationshipData = Serializer.serializeRelationship('authors', 'default', new ObjectID());
       expect(serializedRelationshipData).to.have.property('type').to.eql('authors');
       expect(serializedRelationshipData).to.have.property('id').to.be.a('string');
+      done();
+    });
+
+    it('should return serialized relationship data and empty included for a relationship object wich only contains an id', function(done) {
+      const included = new Map();
+      const serializedRelationshipData = Serializer.serializeRelationship('authors', 'default', {id: '1'}, included);
+      expect(serializedRelationshipData).to.have.property('type').to.eql('authors');
+      expect(serializedRelationshipData).to.have.property('id').to.eql('1');
+      expect([...included.values()]).to.have.lengthOf(0);
       done();
     });
 
