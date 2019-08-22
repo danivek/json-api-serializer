@@ -8,7 +8,6 @@ const TickCounter = require('../helpers/tick-counter');
 
 const JSONAPISerializer = require('../../');
 const validator = require('../../lib/validator');
-const LRU = require('../../lib/lru-cache');
 
 describe('JSONAPISerializer', function() {
   describe('register', function() {
@@ -2156,5 +2155,4 @@ describe('JSONAPISerializer', function() {
     expect(converted.date).to.be.a('Date');
   });
  });
-
 });
