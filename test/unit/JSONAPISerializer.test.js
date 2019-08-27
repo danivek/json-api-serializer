@@ -2228,5 +2228,5 @@ describe('JSONAPISerializer', function() {
     expect(converted['array-of-number']).to.deep.equal([1, 2, 3, 4, 5]);
     expect(converted.date).to.be.a('Date');
   });
- }); 
+ });
 });
