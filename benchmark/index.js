@@ -9,6 +9,10 @@ const JSONAPISerializer = require('..');
 const suite = new Benchmark.Suite();
 
 const serializer = new JSONAPISerializer();
+const serializerConvert = new JSONAPISerializer({
+  convertCase: 'kebab-case',
+  unconvertCase: 'camelCase'
+});
 
 const data = [
   {
@@ -51,8 +55,8 @@ const data = [
   }
 ];
 
-serializer.register('article', {
-  id: 'id', // The attributes to use as the reference. Default = 'id'.
+const articleSchema = {
+  id: 'id',
   links: {
     // An object or a function that describes links.
     self(d) {
@@ -63,7 +67,7 @@ serializer.register('article', {
   relationships: {
     // An object defining some relationships.
     author: {
-      type: 'people', // The type of the resource
+      type: 'people',
       links(d) {
         // An object or a function that describes Relationships links
         return {
@@ -92,36 +96,47 @@ serializer.register('article', {
   },
   topLevelLinks: {
     // An object or a function that describes top level links.
-    self: '/articles' // Can be a function (with extra data argument) or a string value
+    self: '/articles'
   }
-});
+};
+serializer.register('article', articleSchema);
+serializerConvert.register('article', articleSchema);
 
 // Register 'people' type
-serializer.register('people', {
+const peopleSchema = {
   id: 'id',
   links: {
     self(d) {
       return `/peoples/${d.id}`;
     }
   }
-});
+};
+serializer.register('people', peopleSchema);
+serializerConvert.register('people', peopleSchema);
 
 // Register 'tag' type
-serializer.register('tag', {
+const tagSchema = {
   id: 'id'
-});
+};
+serializer.register('tag', tagSchema);
+serializerConvert.register('tag', tagSchema);
 
 // Register 'photo' type
-serializer.register('photo', {
+const photoSchema = {
   id: 'id'
-});
+};
+serializer.register('photo', photoSchema);
+serializerConvert.register('photo', photoSchema);
 
 // Register 'comment' type with a custom schema
-serializer.register('comment', 'only-body', {
+const commentSchema = {
   id: '_id'
-});
+};
+serializer.register('comment', 'only-body', commentSchema);
+serializerConvert.register('comment', 'only-body', commentSchema);
 
 let serialized;
+let serializedConvert;
 
 // Plateform
 console.log('Platform info:');
@@ -160,6 +175,9 @@ suite
   .add('serialize', () => {
     serialized = serializer.serialize('article', data, { count: 2 });
   })
+  .add('serializeConvertCase', () => {
+    serializedConvert = serializerConvert.serialize('article', data, { count: 2 });
+  })
   .add('deserializeAsync', {
     defer: true,
     fn(deferred) {
@@ -170,6 +188,9 @@ suite
   })
   .add('deserialize', () => {
     serializer.deserialize('article', serialized);
+  })
+  .add('deserializeConvertCase', () => {
+    serializerConvert.deserialize('article', serializedConvert);
   })
   .add('serializeError', () => {
     const error = new Error('An error occured');
