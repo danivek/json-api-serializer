@@ -495,19 +495,21 @@ const deserialized = Serializer.deserializeAsync(typeConfig, data).then(result =
 ```bash
 Platform info:
 ==============
-Darwin 18.5.0 x64
-Node.JS: 10.15.2
-V8: 6.8.275.32-node.12
+Darwin 18.7.0 x64
+Node.JS: 10.16.3
+V8: 6.8.275.32-node.54
 Intel(R) Core(TM) i7-4770HQ CPU @ 2.20GHz × 8
 
 Suite:
 ==============
-serializeAsync x 64,411 ops/sec ±0.59% (82 runs sampled)
-serialize x 150,408 ops/sec ±0.63% (93 runs sampled)
-deserializeAsync x 111,881 ops/sec ±0.31% (84 runs sampled)
-deserialize x 445,711 ops/sec ±0.29% (94 runs sampled)
-serializeError x 294,273 ops/sec ±0.79% (90 runs sampled)
-serializeError with a JSON API error object x 16,864,514 ops/sec ±0.32% (93 runs sampled)
+serializeAsync x 80,043 ops/sec ±0.74% (78 runs sampled)
+serialize x 135,669 ops/sec ±1.12% (88 runs sampled)
+serializeConvertCase x 98,785 ops/sec ±2.34% (88 runs sampled)
+deserializeAsync x 172,832 ops/sec ±0.41% (82 runs sampled)
+deserialize x 393,979 ops/sec ±0.32% (91 runs sampled)
+deserializeConvertCase x 119,021 ops/sec ±1.76% (95 runs sampled)
+serializeError x 276,346 ops/sec ±1.07% (86 runs sampled)
+serializeError with a JSON API error object x 15,783,113 ops/sec ±1.74% (88 runs sampled)
 ```
 
 ## License
