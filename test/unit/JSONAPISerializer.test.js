@@ -485,6 +485,38 @@ describe('JSONAPISerializer', function() {
       ]);
       done();
     });
+
+    it('should serialize relationship with classes', function(done) {
+      const included = new Map();
+      const typeFn = (data) => data.type;
+
+      const Serializer = new JSONAPISerializer();
+      Serializer.register('author');
+      class Author {
+        constructor({ id, name }) {
+          this.id = id;
+          this.name = name;
+        }
+      } 
+
+      const data = new Author({
+        id: '1',
+        name: 'Kaley Maggio'
+      });
+
+      const serializedRelationships = Serializer.serializeRelationship('author', 'default', data, included);
+      expect(serializedRelationships).to.deep.equal({ type: 'author', id: '1' });
+      expect([...included.values()]).to.deep.equal([
+        {
+          type: 'author',
+          id: '1',
+          attributes: { name: 'Kaley Maggio' },
+          relationships: undefined,
+          meta: undefined,
+          links: undefined 
+        }]);
+      done();
+    });
   });
 
   describe('serializeRelationships', function() {
