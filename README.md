@@ -65,14 +65,15 @@ Serializer.register(type, options);
 
 To avoid repeating the same options for each type, it's possible to add global options on `JSONAPISerializer` instance:
 
-When using convertCase, a LRU cache is utilized for optimization. The default size of the cache is 5000 per conversion type. The size of the cache can be set by passing in a second parameter to the instance. Passing in 0 will result in a LRU cache of infinite size.
+When using convertCase, a LRU cache is utilized for optimization. The default size of the cache is 5000 per conversion type. The size of the cache can be set with the `convertCaseCacheSize` option. Passing in 0 will result in a LRU cache of infinite size.
 
 ```javascript
 var JSONAPISerializer = require("json-api-serializer");
 var Serializer = new JSONAPISerializer({
   convertCase: "kebab-case",
-  unconvertCase: "camelCase"
-}, 0);
+  unconvertCase: "camelCase",
+  convertCaseCacheSize: 0
+});
 ```
 
 ## Usage
