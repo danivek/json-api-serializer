@@ -400,7 +400,7 @@ describe('JSONAPISerializer', function() {
       done();
     });
 
-    
+
     it('should return serialized relationship with unpopulated relationship with mongoDB BSON ObjectID', function(done) {
       const serializedRelationshipData = Serializer.serializeRelationship('authors', 'default', new ObjectID());
       expect(serializedRelationshipData).to.have.property('type').to.eql('authors');
@@ -430,7 +430,7 @@ describe('JSONAPISerializer', function() {
         name: 'Author 1',
         gender: 'male'
       }, included);
-      
+
       included = [...included.values()];
       expect(serializedRelationshipData).to.have.property('type').to.eql('authors');
       expect(serializedRelationshipData).to.have.property('id').to.eql('1');
@@ -497,7 +497,7 @@ describe('JSONAPISerializer', function() {
           this.id = id;
           this.name = name;
         }
-      } 
+      }
 
       const data = new Author({
         id: '1',
@@ -513,7 +513,7 @@ describe('JSONAPISerializer', function() {
           attributes: { name: 'Kaley Maggio' },
           relationships: undefined,
           meta: undefined,
-          links: undefined 
+          links: undefined
         }]);
       done();
     });
@@ -1534,7 +1534,7 @@ describe('JSONAPISerializer', function() {
     it('should deserialize with \'unconvertCase\' options', function(done) {
       const Serializer = new JSONAPISerializer();
       Serializer.register('articles', {
-        unconvertCase: 'snake_case'
+        unconvertCase: 'snake_case',
       });
 
       const data = {
@@ -1560,7 +1560,43 @@ describe('JSONAPISerializer', function() {
       expect(deserializedData).to.have.property('article_author');
       done();
     });
-    
+
+    it.only('should deserialize with \'unconvertCase\' and \'deserialize\' options', function(done) {
+      const Serializer = new JSONAPISerializer();
+      Serializer.register('articles', {
+        unconvertCase: 'snake_case',
+        relationships: {
+          article_author: {
+            deserialize: data => data.attributes,
+            type: 'authors',
+          },
+        }
+      });
+
+      const data = {
+        data: {
+          type: 'article',
+          id: '1',
+          attributes: {
+            createdAt: '2015-05-22T14:56:29.000Z'
+          },
+          relationships: {
+            articleAuthor: {
+              data: {
+                type: 'people',
+                attributes: { firstName: 'Karl' }
+              }
+            }
+          }
+        }
+      };
+
+      const deserializedData = Serializer.deserialize('articles', data);
+      expect(deserializedData).to.have.property('created_at');
+      expect(deserializedData.article_author).to.deep.equal({ first_name: 'Karl' });
+      done();
+    });
+
     it('should deserialize with \'unconvertCase\' options with \'alternative_key\' relationship', function(done) {
       const Serializer = new JSONAPISerializer();
       Serializer.register('articles', {
@@ -1572,7 +1608,7 @@ describe('JSONAPISerializer', function() {
           },
         }
       });
-    
+
       const data = {
         data: {
           type: 'article',
@@ -1590,7 +1626,7 @@ describe('JSONAPISerializer', function() {
           }
         }
       };
-    
+
       const deserializedData = Serializer.deserialize('articles', data);
       expect(deserializedData).to.have.property('created_at');
       expect(deserializedData).to.have.property('article_author_id');
@@ -1731,7 +1767,7 @@ describe('JSONAPISerializer', function() {
     it('should deserialize with a custom schema', function(done) {
       const Serializer = new JSONAPISerializer();
       Serializer.register('articles', 'custom');
-    
+
       const data = {
         data: {
           type: 'article',
@@ -1741,7 +1777,7 @@ describe('JSONAPISerializer', function() {
           }
         }
       };
-    
+
       const deserializedData = Serializer.deserialize('articles', data, 'custom');
       expect(deserializedData).to.have.property('createdAt');
       done();
@@ -1855,7 +1891,7 @@ describe('JSONAPISerializer', function() {
     it('should deserialize with a custom schema', function(done) {
       const Serializer = new JSONAPISerializer();
       Serializer.register('articles', 'custom');
-    
+
       const data = {
         data: {
           type: 'article',
@@ -1865,7 +1901,7 @@ describe('JSONAPISerializer', function() {
           }
         }
       };
-    
+
       Serializer.deserializeAsync('articles', data, 'custom').then((deserializedData) => {
         expect(deserializedData).to.have.property('createdAt');
         done();
@@ -2026,7 +2062,7 @@ describe('JSONAPISerializer', function() {
       expect(serializedError.errors[0]).to.have.property('status').to.eql('500');
       expect(serializedError.errors[0]).to.have.property('code').to.eql('ERROR');
       expect(serializedError.errors[0]).to.have.property('detail').to.eql('An error occured');
-      
+
       done();
     });
 
@@ -2038,7 +2074,7 @@ describe('JSONAPISerializer', function() {
       expect(serializedErrors).to.have.property('errors').to.be.instanceof(Array).to.have.lengthOf(2);
       expect(serializedErrors.errors[0]).to.have.property('detail').to.eql('First Error');
       expect(serializedErrors.errors[1]).to.have.property('detail').to.eql('Second Error');
-      
+
       done();
     });
 
@@ -2048,7 +2084,7 @@ describe('JSONAPISerializer', function() {
       expect(function() {
         Serializer.serializeError(jsonapiError);
       }).to.throw(Error, 'error must be an object');
-      
+
       done();
     });
 
@@ -2080,7 +2116,7 @@ describe('JSONAPISerializer', function() {
       expect(function() {
         Serializer.serializeError(jsonapiError3);
       }).to.throw(Error, 'error \'source.parameter\' property must be a string');
-      
+
       done();
     });
 
@@ -2120,11 +2156,11 @@ describe('JSONAPISerializer', function() {
       expect(function() {
         Serializer.serializeError(jsonapiErrorBadLink3);
       }).to.throw(Error, '\'links.self.meta\' property must be an object');
-      
+
       expect(function() {
         Serializer.serializeError(jsonapiErrorBadLink4);
       }).to.throw(Error, 'error \'links.self\' must be a string or an object');
-      
+
       done();
     });
 
@@ -2148,7 +2184,7 @@ describe('JSONAPISerializer', function() {
 
       expect(serializedError).to.have.property('errors').to.be.instanceof(Array).to.have.lengthOf(1);
       expect(serializedError.errors[0]).to.deep.eql(jsonapiError);
-      
+
       done();
     });
 
@@ -2179,7 +2215,7 @@ describe('JSONAPISerializer', function() {
         title: 'Second Error',
         detail: 'Second Error'
       }]);
-      
+
       done();
     });
   })
@@ -2200,7 +2236,7 @@ describe('JSONAPISerializer', function() {
       }],
       'kebab-case'
     );
-    
+
     expect(converted).to.deep.equal([{
       'array-of-object': [{ 'first-property': 'test', 'second-property': null, 'third-property': 0 }],
       'array-of-number': [1, 2, 3, 4, 5]
@@ -2223,7 +2259,7 @@ describe('JSONAPISerializer', function() {
       },
       'kebab-case'
     );
-      
+
     expect(converted['array-of-object']).to.deep.equal([{ 'first-property': 'test', 'second-property': null, 'third-property': 0 }]);
     expect(converted['array-of-number']).to.deep.equal([1, 2, 3, 4, 5]);
     expect(converted.date).to.be.a('Date');
