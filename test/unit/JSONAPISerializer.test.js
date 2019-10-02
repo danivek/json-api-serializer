@@ -1561,7 +1561,7 @@ describe('JSONAPISerializer', function() {
       done();
     });
 
-    it.only('should deserialize with \'unconvertCase\' and \'deserialize\' options', function(done) {
+    it('should deserialize with \'unconvertCase\' and \'deserialize\' options', function(done) {
       const Serializer = new JSONAPISerializer();
       Serializer.register('articles', {
         unconvertCase: 'snake_case',
