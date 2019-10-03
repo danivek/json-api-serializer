@@ -1533,8 +1533,57 @@ describe('JSONAPISerializer', function() {
 
     it('should deserialize with \'unconvertCase\' options', function(done) {
       const Serializer = new JSONAPISerializer();
-      Serializer.register('articles', {
+      Serializer.register('article', {
         unconvertCase: 'snake_case',
+        relationships: {
+          article_author: {
+            type: 'people',
+          },
+        }
+      });
+      Serializer.register('people', {
+        unconvertCase: 'snake_case',
+      });
+
+      const data = {
+        data: {
+          type: 'article',
+          id: '1',
+          attributes: {
+            createdAt: '2015-05-22T14:56:29.000Z'
+          },
+          relationships: {
+            articleAuthor: {
+              data: {
+                type: 'people',
+                id: '1'
+              }
+            }
+          }
+        },
+        included: [{
+          type: 'people',
+          id: '1',
+          attributes: { firstName: 'Karl' }
+        }]
+      };
+
+      const deserializedData = Serializer.deserialize('article', data);
+      expect(deserializedData).to.have.property('created_at');
+      expect(deserializedData.article_author).to.deep.equal({ id: '1', first_name: 'Karl' });
+      done();
+    });
+
+    it('should deserialize with \'unconvertCase\' and \'deserialize\' options', function(done) {
+      const Serializer = new JSONAPISerializer();
+      Serializer.register('article', {
+        unconvertCase: 'snake_case',
+        relationships: {
+          article_author: {
+            deserialize: data => ({ id: data.id, additionalProperty: `${data.type}-${data.id}` }),
+            type: 'people',
+          },
+        }
       });
 
       const data = {
@@ -1555,45 +1604,9 @@ describe('JSONAPISerializer', function() {
         }
       };
 
-      const deserializedData = Serializer.deserialize('articles', data);
+      const deserializedData = Serializer.deserialize('article', data);
       expect(deserializedData).to.have.property('created_at');
-      expect(deserializedData).to.have.property('article_author');
-      done();
-    });
-
-    it('should deserialize with \'unconvertCase\' and \'deserialize\' options', function(done) {
-      const Serializer = new JSONAPISerializer();
-      Serializer.register('articles', {
-        unconvertCase: 'snake_case',
-        relationships: {
-          article_author: {
-            deserialize: data => data.attributes,
-            type: 'authors',
-          },
-        }
-      });
-
-      const data = {
-        data: {
-          type: 'article',
-          id: '1',
-          attributes: {
-            createdAt: '2015-05-22T14:56:29.000Z'
-          },
-          relationships: {
-            articleAuthor: {
-              data: {
-                type: 'people',
-                attributes: { firstName: 'Karl' }
-              }
-            }
-          }
-        }
-      };
-
-      const deserializedData = Serializer.deserialize('articles', data);
-      expect(deserializedData).to.have.property('created_at');
-      expect(deserializedData.article_author).to.deep.equal({ first_name: 'Karl' });
+      expect(deserializedData.article_author).to.deep.equal({ id: '1', additional_property: 'people-1' });
       done();
     });
 
