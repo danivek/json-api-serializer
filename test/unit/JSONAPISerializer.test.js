@@ -858,12 +858,31 @@ describe('JSONAPISerializer', function() {
 
   describe('serialize', function() {
     const Serializer = new JSONAPISerializer();
+    const dataArray = [{
+      id: 1,
+      title: 'Article 1',
+    }, {
+      id: 2,
+      title: 'Article 2',
+    }, {
+      id: 3,
+      title: 'Article 3',
+    }]
+
     Serializer.register('articles', {
-      topLevelMeta: {
-        count: function(options) {
-          return options.count
-        }
-      }
+      topLevelMeta: (data, extraData) => ({
+        count: extraData.count,
+        total: data.length
+      })
+    });
+
+    it('should not include data property if excludeData is true', (done) => {
+      const serializedData = Serializer.serialize('articles', dataArray, 'default', {count: 2}, true);
+      expect(serializedData.data).to.be.undefined;
+      expect(serializedData.meta).to.have.property('count', 2)
+      expect(serializedData.meta).to.have.property('total', 3)
+      expect(serializedData.included).to.be.undefined;
+      done();
     });
 
     it('should serialize empty single data', function(done) {
@@ -1003,11 +1022,10 @@ describe('JSONAPISerializer', function() {
     }]
 
     Serializer.register('articles', {
-      topLevelMeta: {
-        count: function(options) {
-          return options.count
-        }
-      }
+      topLevelMeta: (data, extraData) => ({
+        count: extraData.count,
+        total: data.length,
+      })
     });
 
     it('should return a Promise', () => {
@@ -1015,18 +1033,20 @@ describe('JSONAPISerializer', function() {
       expect(promise).to.be.instanceOf(Promise);
     });
 
+    it('should not include data property if excludeData is true', () => {
+      return Serializer.serializeAsync('articles', dataArray, 'default', {count: 2}, true)
+        .then((serializedData) => {
+          expect(serializedData.data).to.be.undefined;
+          expect(serializedData.meta).to.have.property('count', 2)
+          expect(serializedData.meta).to.have.property('total', 3)
+          expect(serializedData.included).to.be.undefined;
+        });
+    });
+
     it('should serialize empty single data', () =>
       Serializer.serializeAsync('articles', {})
         .then((serializedData) => {
           expect(serializedData.data).to.eql(null);
-          expect(serializedData.included).to.be.undefined;
-        })
-    );
-
-    it('should serialize empty array data', () =>
-      Serializer.serializeAsync('articles', [])
-        .then((serializedData) => {
-          expect(serializedData.data).to.eql([]);
           expect(serializedData.included).to.be.undefined;
         })
     );
