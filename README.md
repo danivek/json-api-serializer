@@ -326,6 +326,23 @@ The output data will be :
 }
 ```
 
+There is an available argument `excludeData` that will exclude the `data`
+property from the serialized object. This can be used in cases where you may
+want to only include the `topLevelMeta` in your response, such as a `DELETE`
+response with only a `meta` property, or other cases defined in the
+JSON:API spec.
+
+```javascript
+// Synchronously (blocking)
+const result = Serializer.serialize('article', data, 'default', {count: 2}, true);
+
+// Asynchronously (non-blocking)
+Serializer.serializeAsync('article', data, 'default', {count: 2}, true)
+  .then((result) => {
+    ...
+  });
+```
+
 Some others examples are available in [tests folders](https://github.com/danivek/json-api-serializer/blob/master/test/)
 
 ### Deserialize
