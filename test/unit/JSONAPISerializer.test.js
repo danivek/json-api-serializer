@@ -2254,6 +2254,13 @@ describe('JSONAPISerializer', function() {
   })
 
  describe('convertCase', function() {
+  it('should return null', function() {
+    const jsonapiSerializer = new JSONAPISerializer();
+    const converted = jsonapiSerializer._convertCase(null, 'kebab-case');
+
+    expect(converted).to.equal(null);
+  });
+
   it('should convert an array of object to kebab-case', function() {
     const jsonapiSerializer = new JSONAPISerializer();
     const converted = jsonapiSerializer._convertCase(
@@ -2265,14 +2272,20 @@ describe('JSONAPISerializer', function() {
             thirdProperty: 0
           }
         ],
-        arrayOfNumber: [1, 2, 3, 4, 5]
+        arrayOfNumber: [1, 2, 3, 4, 5],
+        arrayOfString: ['firstString', 'secondString'],
+        normalProperty: 'normalProperty',
+        nullProperty: null,
       }],
       'kebab-case'
     );
 
     expect(converted).to.deep.equal([{
       'array-of-object': [{ 'first-property': 'test', 'second-property': null, 'third-property': 0 }],
-      'array-of-number': [1, 2, 3, 4, 5]
+      'array-of-number': [1, 2, 3, 4, 5],
+      'array-of-string': ['firstString', 'secondString'],
+      'normal-property': 'normalProperty',
+      'null-property': null
     }]);
   });
 
@@ -2288,6 +2301,9 @@ describe('JSONAPISerializer', function() {
           }
         ],
         arrayOfNumber: [1, 2, 3, 4, 5],
+        arrayOfString: ['firstString', 'secondString'],
+        normalProperty: 'normalProperty',
+        nullProperty: null,
         date: new Date()
       },
       'kebab-case'
@@ -2295,6 +2311,9 @@ describe('JSONAPISerializer', function() {
 
     expect(converted['array-of-object']).to.deep.equal([{ 'first-property': 'test', 'second-property': null, 'third-property': 0 }]);
     expect(converted['array-of-number']).to.deep.equal([1, 2, 3, 4, 5]);
+    expect(converted['array-of-string']).to.deep.equal(['firstString', 'secondString']);
+    expect(converted['normal-property']).to.equal('normalProperty');
+    expect(converted['null-property']).to.equal(null);
     expect(converted.date).to.be.a('Date');
   });
  });
