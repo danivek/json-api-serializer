@@ -1824,6 +1824,25 @@ describe('JSONAPISerializer', function() {
       }).to.throw(Error, 'No schema custom registered for articles');
       done();
     });
+
+    it('should deserialize correctly when one of attribute is an array with \'unconvertCase\' ', function(done) {
+      const Serializer = new JSONAPISerializer();
+      Serializer.register('articles', { unconvertCase: 'camelCase', });
+
+      const data = {
+        data: {
+          type: 'article',
+          id: '1',
+          attributes: {
+            tags: ['JSON:API', 'ember.js']
+          }
+        }
+      };
+
+      const deserializedData = Serializer.deserialize('articles', data);
+      expect(deserializedData.tags).to.to.deep.equal(data.data.attributes.tags);
+      done();
+    })
   });
 
   describe('deserializeAsync', function() {
