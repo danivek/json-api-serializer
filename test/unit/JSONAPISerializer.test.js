@@ -1006,6 +1006,86 @@ describe('JSONAPISerializer', function() {
       expect(serializedData).have.property('jsonapi').to.be.undefined;
       done();
     });
+
+    it('should override options with provided override object', function(done) {
+      const Serializer = new JSONAPISerializer();
+      Serializer.register('person', {
+        relationships: {
+          address: {
+            type: 'address'
+          }
+        }
+      });
+      Serializer.register('address', {});
+      Serializer.register('articles', {});
+      const data = {
+        id: '1',
+        'first-name': 'firstName',
+        'last-name': 'lastName',
+        'social-security-number': '000-00-0000',
+        address: {
+          id:'1',
+          'zip-code': 123456,
+          'phone-number': '000-000-0000'
+        }
+      };
+      const serializedData = Serializer.serialize('person', data, 'default', null, null, {
+        'person': {
+          convertCase: 'camelCase',
+          blacklist: ['social-security-number']
+        },
+        'address': {
+          whitelist: ['zip-code']
+        }
+      });
+      expect(serializedData.data.attributes).to.have.property('firstName');
+      expect(serializedData.data.attributes).to.have.property('lastName');
+      expect(serializedData.data.attributes).to.not.have.property('socialSecurityNumber');
+      expect(serializedData.included[0].attributes).to.have.property('zip-code');
+      expect(serializedData.included[0].attributes).to.not.have.property('phone-number');
+      done();
+    });
+
+    it('should override options with provided override object for mixedResourceType', function(done) {
+      const Serializer = new JSONAPISerializer();
+      Serializer.register('person', {
+        convertCase: 'camelCase',
+        relationships: {
+          address: {
+            type: 'address'
+          }
+        }
+      });
+      Serializer.register('address', {});
+      const data = {
+        id: '1',
+        'first-name': 'firstName',
+        'last-name': 'lastName',
+        'social-security-number': '000-00-0000',
+        address: {
+          id:'1',
+          'zip-code': 123456,
+          'phone-number': '000-000-0000'
+        },
+        type: 'person'
+      };
+      const serializedData = Serializer.serialize({
+        type: 'type',
+      }, data, 'default', null, null, {
+        'person': {
+          blacklist: ['social-security-number']
+        },
+        'address': {
+          whitelist: ['zip-code']
+        }
+      });
+      expect(serializedData.data.attributes).to.have.property('firstName');
+      expect(serializedData.data.attributes).to.have.property('lastName');
+      expect(serializedData.data.attributes).to.not.have.property('socialSecurityNumber');
+      expect(serializedData.included[0].attributes).to.have.property('zip-code');
+      expect(serializedData.included[0].attributes).to.not.have.property('phone-number');
+      done();
+    });
   });
 
   describe('serializeAsync', function() {
@@ -1167,6 +1247,46 @@ describe('JSONAPISerializer', function() {
           expect(serializedData.data.attributes).to.have.property('title');
           expect(serializedData.data.attributes).to.have.property('body');
           expect(serializedData.included).to.be.undefined;
+        });
+    });
+
+    it('should override options with provided override object', function(done) {
+      const Serializer = new JSONAPISerializer();
+      Serializer.register('person', {
+        relationships: {
+          address: {
+            type: 'address'
+          }
+        }
+      });
+      Serializer.register('address', {});
+      const data = {
+        id: '1',
+        'first-name': 'firstName',
+        'last-name': 'lastName',
+        'social-security-number': '000-00-0000',
+        address: {
+          id:'1',
+          'zip-code': 123456,
+          'phone-number': '000-000-0000'
+        }
+      };
+      Serializer.serializeAsync('person', data, 'default', null, null, {
+        'person': {
+          convertCase: 'camelCase',
+          blacklist: ['social-security-number']
+        },
+        'address': {
+          whitelist: ['zip-code']
+        }
+      })
+        .then(serializedData => {
+          expect(serializedData.data.attributes).to.have.property('firstName');
+          expect(serializedData.data.attributes).to.have.property('lastName');
+          expect(serializedData.data.attributes).to.not.have.property('socialSecurityNumber');
+          expect(serializedData.included[0].attributes).to.have.property('zip-code');
+          expect(serializedData.included[0].attributes).to.not.have.property('phone-number');
+          done();
         });
     });
   });

@@ -343,6 +343,23 @@ Serializer.serializeAsync('article', data, 'default', {count: 2}, true)
   });
 ```
 
+#### Override schema options
+
+On each individual call to `serialize` or `serializeAsync`, there is an parameter to override the options of any registered type. For example on a call to serialize, if a whitelist was not defined on the registered schema options, a whitelist (or any other options) for that type can be provided. This parameter is an object, where the key are the registered type names, and the values are the objects to override the registered schema.
+
+In the following example, only the attribute `name` will be serialized on the article, and if there is a relationship for `person`, it will be serialized with `camelCase` even if the registered schema has a different value.
+```
+const result = Serializer.serialize('article', data, 'default', {count: 2}, true), {
+  article: {
+    whitelist: ['name']
+  },
+  person: {
+    convertCase: 'camelCase'
+  }
+};
+```
+
+
 Some others examples are available in [tests folders](https://github.com/danivek/json-api-serializer/blob/master/test/)
 
 ### Deserialize
