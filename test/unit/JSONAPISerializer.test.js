@@ -1086,6 +1086,77 @@ describe('JSONAPISerializer', function() {
       expect(serializedData.included[0].attributes).to.not.have.property('phone-number');
       done();
     });
+
+    it('should merge relationships data if already included', function(done) {
+      const Serializer = new JSONAPISerializer();
+      Serializer.register('article', {
+        relationships: {
+          author: {
+            type: 'people'
+          },
+          comments: {
+            type: 'comment'
+          }
+        }
+      });
+      Serializer.register('people', {
+        relationships: {
+          friends: {
+            type: 'people'
+          },
+          image: {
+            type: 'image'
+          }
+        }
+      });
+      Serializer.register('comment', {
+        relationships: {
+          author: {
+            type: 'people'
+          }
+        }
+      });
+      Serializer.register('image', {});
+
+      const data = {
+        id: '1',
+        title: 'JSON API paints my bikeshed!',
+        body: 'The shortest article. Ever.',
+        created: '2015-05-22T14:56:29.000Z',
+        author: {
+          id: '1',
+          firstName: 'Kaley',
+          lastName: 'Maggio',
+          friends: [{
+            id: '2',
+            firstName: 'Kaley2',
+            lastName: 'Maggio2',
+          }]
+        },
+        comments: [{
+          id: '1',
+          body: 'I Like !',
+          author: {
+            id: '1',
+            firstName: 'Kaley',
+            lastName: 'Maggio',
+            image: {
+              id: '1',
+              title: 'Beautiful picture',
+            }
+          }
+        }]
+      };
+
+      const serializedData = Serializer.serialize('article', data);
+      console.log(JSON.stringify(serializedData, null, 2));
+      
+      const people1 = serializedData.included.find((include => include.type === 'people' && include.id === '1'));
+      expect(people1).to.have.property('relationships');
+      expect(people1.relationships).to.have.property('image');
+      expect(people1.relationships).to.have.property('friends');
+      done();
+    });
   });
 
   describe('serializeAsync', function() {
