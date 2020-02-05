@@ -1,6 +1,6 @@
 {
   "name": "json-api-serializer",
-  "version": "2.2.2",
+  "version": "2.3.0",
   "description": "Framework agnostic JSON API serializer.",
   "main": "index.js",
   "scripts": {
