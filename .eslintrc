@@ -3,7 +3,7 @@
     "eslint:recommended",
     "airbnb-base",
     "plugin:prettier/recommended",
-    "plugin:jsdoc/recommended",
+    "plugin:jsdoc/recommended"
   ],
   "parserOptions": {
     "ecmaVersion": 2018

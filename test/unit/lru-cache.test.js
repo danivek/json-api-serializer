@@ -3,15 +3,15 @@ const { expect } = require('chai');
 
 const LRU = require('../../lib/lru-cache');
 
-describe('LRU Cache', function() {
-  it('should create an LRU', function() {
+describe('LRU Cache', function () {
+  it('should create an LRU', function () {
     const lru = new LRU(5);
     expect(lru).to.have.property('head');
     expect(lru).to.have.property('tail');
     expect(lru.capacity).to.equal(5);
   });
 
-  it('should set a single node, and be able to retreive it', function() {
+  it('should set a single node, and be able to retreive it', function () {
     const lru = new LRU(5);
     lru.set('myKey', 'my-key');
 
@@ -23,7 +23,7 @@ describe('LRU Cache', function() {
     expect(myKey).to.equal('my-key');
   });
 
-  it('should add new nodes to the head and move last fetched node to the head', function() {
+  it('should add new nodes to the head and move last fetched node to the head', function () {
     const lru = new LRU(5);
     lru.set(1, 1);
     lru.set(2, 2);
@@ -49,7 +49,7 @@ describe('LRU Cache', function() {
     expect(head.next.next.next.next).to.equal(null);
   });
 
-  it('should remove nodes after hitting capacity', function() {
+  it('should remove nodes after hitting capacity', function () {
     const lru = new LRU(5);
     lru.set(1, 1);
     lru.set(2, 2);
@@ -69,13 +69,13 @@ describe('LRU Cache', function() {
     expect(head.next.next.next.next.next).to.equal(null);
   });
 
-  it('should create an LRU of infinite capacity', function() {
+  it('should create an LRU of infinite capacity', function () {
     const lru = new LRU(0);
 
     expect(lru.capacity).to.equal(Infinity);
   });
 
-  it('should replace a node if the capacity is 1', function() {
+  it('should replace a node if the capacity is 1', function () {
     const lru = new LRU(1);
 
     lru.set(1, 1);
@@ -90,7 +90,7 @@ describe('LRU Cache', function() {
     expect(lru.get(2)).to.equal(2);
   });
 
-  it('should reset a nodes value if it already exists', function() {
+  it('should reset a nodes value if it already exists', function () {
     const lru = new LRU(5);
     lru.set(1, 1);
     lru.set(2, 2);

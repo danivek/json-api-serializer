@@ -1149,7 +1149,6 @@ describe('JSONAPISerializer', function() {
       };
 
       const serializedData = Serializer.serialize('article', data);
-      console.log(JSON.stringify(serializedData, null, 2));
       
       const people1 = serializedData.included.find((include => include.type === 'people' && include.id === '1'));
       expect(people1).to.have.property('relationships');
