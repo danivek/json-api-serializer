@@ -2276,14 +2276,41 @@ describe('JSONAPISerializer', function() {
 
     it('should return serialized error with an instance of Error', function(done) {
       const error = new Error('An error occured');
+
+      const serializedError = Serializer.serializeError(error);
+
+      expect(serializedError).to.have.property('errors').to.be.instanceof(Array).to.have.lengthOf(1);
+      expect(serializedError.errors[0]).to.have.property('title').to.eql('Error');
+      expect(serializedError.errors[0]).to.have.property('detail').to.eql('An error occured');
+
+      done();
+    });
+
+    it('should return serialized error with a custom Error class', function(done) {
+      class CustomError extends Error { };
+      const error = new CustomError('An error occured');
+
+      const serializedError = Serializer.serializeError(error);
+
+      expect(serializedError).to.have.property('errors').to.be.instanceof(Array).to.have.lengthOf(1);
+      expect(serializedError.errors[0]).to.have.property('title').to.eql('CustomError');
+      expect(serializedError.errors[0]).to.have.property('detail').to.eql('An error occured');
+
+      done();
+    });
+
+    it('should return serialized error with an instance of Error including additional properties status, code and title', function(done) {
+      const error = new Error('An error occured');
       error.status = 500;
       error.code = 'ERROR';
+      error.title = 'Error title';
 
       const serializedError = Serializer.serializeError(error);
 
       expect(serializedError).to.have.property('errors').to.be.instanceof(Array).to.have.lengthOf(1);
       expect(serializedError.errors[0]).to.have.property('status').to.eql('500');
       expect(serializedError.errors[0]).to.have.property('code').to.eql('ERROR');
+      expect(serializedError.errors[0]).to.have.property('title').to.eql('Error title');
       expect(serializedError.errors[0]).to.have.property('detail').to.eql('An error occured');
 
       done();
@@ -2295,7 +2322,10 @@ describe('JSONAPISerializer', function() {
       const serializedErrors = Serializer.serializeError(errors);
 
       expect(serializedErrors).to.have.property('errors').to.be.instanceof(Array).to.have.lengthOf(2);
+
+      expect(serializedErrors.errors[0]).to.have.property('title').to.eql('Error');
       expect(serializedErrors.errors[0]).to.have.property('detail').to.eql('First Error');
+      expect(serializedErrors.errors[1]).to.have.property('title').to.eql('Error');
       expect(serializedErrors.errors[1]).to.have.property('detail').to.eql('Second Error');
 
       done();
