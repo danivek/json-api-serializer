@@ -3,7 +3,6 @@ node_js:
   - "stable"
   - "12"
   - "10"
-  - "8"
 script:
   - npm run lint
   - npm test
