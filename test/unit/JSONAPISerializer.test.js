@@ -1631,9 +1631,9 @@ describe('JSONAPISerializer', function() {
       done();
     });
 
-    it('should deserialize with \'alternativeKey\' option', function(done) {
+    it('should deserialize with \'alternativeKey\' option and no included', function(done) {
       const Serializer = new JSONAPISerializer();
-      Serializer.register('articles', {
+      Serializer.register('article', {
         relationships: {
           author: {
             type: 'people',
@@ -1641,6 +1641,8 @@ describe('JSONAPISerializer', function() {
           }
         }
       });
+
+      Serializer.register('people', {});
 
       const data = {
         data: {
@@ -1662,9 +1664,160 @@ describe('JSONAPISerializer', function() {
         }
       };
 
-      const deserializedData = Serializer.deserialize('articles', data);
-      expect(deserializedData).to.have.property('author_id');
-      expect(deserializedData).to.not.property('author');
+      const deserializedData = Serializer.deserialize('article', data);
+      expect(deserializedData).to.have.property('author_id').to.eql('1');
+      expect(deserializedData).to.not.have.property('author');
+      done();
+    });
+
+    it('should deserialize with \'alternativeKey\' option and included', function(done) {
+      const Serializer = new JSONAPISerializer();
+      Serializer.register('article', {
+        relationships: {
+          author: {
+            type: 'people',
+            alternativeKey: 'author_id'
+          }
+        }
+      });
+
+      Serializer.register('people', {});
+
+      const data = {
+        data: {
+          type: 'article',
+          id: '1',
+          attributes: {
+            title: 'JSON API paints my bikeshed!',
+            body: 'The shortest article. Ever.',
+            created: '2015-05-22T14:56:29.000Z'
+          },
+          relationships: {
+            author: {
+              data: {
+                type: 'people',
+                id: '1'
+              }
+            }
+          }
+        },
+        included: [
+          {
+            type: 'people',
+            id: '1',
+            attributes: {
+              firstName: 'Kaley',
+              lastName: 'Maggio',
+            }
+          }
+        ]
+      };
+
+      const deserializedData = Serializer.deserialize('article', data);
+      expect(deserializedData).to.have.property('author_id').to.eql('1');
+      expect(deserializedData).to.have.property('author').to.deep.equal({id: '1', firstName: 'Kaley', lastName: 'Maggio'});
+      done();
+    });
+
+    it('should deserialize with a relationship array and \'alternativeKey\' option and no included', function(done) {
+      const Serializer = new JSONAPISerializer();
+      Serializer.register('article', {
+        relationships: {
+          author: {
+            type: 'people',
+            alternativeKey: 'author_id'
+          }
+        }
+      });
+
+      Serializer.register('people', {});
+
+      const data = {
+        data: {
+          type: 'article',
+          id: '1',
+          attributes: {
+            title: 'JSON API paints my bikeshed!',
+            body: 'The shortest article. Ever.',
+            created: '2015-05-22T14:56:29.000Z'
+          },
+          relationships: {
+            author: {
+              data: [{
+                type: 'people',
+                id: '1'
+              }, {
+                type: 'people',
+                id: '2'
+              }]
+            }
+          }
+        }
+      };
+
+      const deserializedData = Serializer.deserialize('article', data);
+      expect(deserializedData).to.have.property('author_id').to.eql(['1', '2']);
+      expect(deserializedData).to.not.have.property('author');
+      done();
+    });
+
+    it('should deserialize with a relationship array \'alternativeKey\' option and included', function(done) {
+      const Serializer = new JSONAPISerializer();
+      Serializer.register('article', {
+        relationships: {
+          author: {
+            type: 'people',
+            alternativeKey: 'author_id'
+          }
+        }
+      });
+
+      Serializer.register('people', {});
+
+      const data = {
+        data: {
+          type: 'article',
+          id: '1',
+          attributes: {
+            title: 'JSON API paints my bikeshed!',
+            body: 'The shortest article. Ever.',
+            created: '2015-05-22T14:56:29.000Z'
+          },
+          relationships: {
+            author: {
+              data: [{
+                type: 'people',
+                id: '1'
+              }, {
+                type: 'people',
+                id: '2'
+              }]
+            }
+          }
+        },
+        included: [
+          {
+            type: 'people',
+            id: '1',
+            attributes: {
+              firstName: 'Kaley',
+              lastName: 'Maggio',
+            }
+          },
+          {
+            type: 'people',
+            id: '2',
+            attributes: {
+              firstName: 'Clarence',
+              lastName: 'Davis',
+            }
+          }
+        ]
+      };
+
+      const deserializedData = Serializer.deserialize('article', data);
+      expect(deserializedData).to.have.property('author_id').to.eql(['1', '2']);
+      expect(deserializedData).to.have.property('author').to.deep.equal([{id: '1', firstName: 'Kaley', lastName: 'Maggio'}, {id: '2', firstName: 'Clarence', lastName: 'Davis'}]);
       done();
     });
 
