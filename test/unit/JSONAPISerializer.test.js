@@ -146,6 +146,37 @@ describe('JSONAPISerializer', function() {
       done();
     });
 
+    it('should return serialized data with option id.serialize', function(done) {
+      const singleData = {
+        pk1: '1',
+        pk2: '4',
+      };
+      const serializedData = Serializer.serializeResource('articles', singleData, _.merge(defaultOptions, {
+        id: {
+          serialize: (data) => {
+            return {
+              id: `${data.pk1}-${data.pk2}`,
+              attributes: {},
+            };
+          },
+          deserialize: (data) => {
+            const [pk1, pk2] = data.id.split('-');
+            return {
+              pk1,
+              pk2,
+            }
+          },
+        }
+      }));
+      expect(serializedData).to.have.property('type').to.eql('articles');
+      expect(serializedData).to.have.property('id').to.eql('1-4');
+      expect(serializedData.relationships).to.be.undefined;
+      expect(serializedData.links).to.be.undefined;
+      expect(serializedData.meta).to.be.undefined;
+
+      done();
+    });
+
     it('should return type of string for a non string id in input', function(done) {
       const singleData = {
         id: 1,
@@ -1631,6 +1662,45 @@ describe('JSONAPISerializer', function() {
       done();
     });
 
+    it('should deserialize with \'id.deserialize\' options', function(done) {
+      const Serializer = new JSONAPISerializer();
+      Serializer.register('articles', {
+        id: {
+          serialize: (data) => {
+            return {
+              id: `${data.pk1}-${data.pk2}`,
+              attributes: {},
+            };
+          },
+          deserialize: (data) => {
+            const [pk1, pk2] = data.id.split('-');
+            return {
+              pk1,
+              pk2,
+            }
+          },
+        }
+      });
+
+      const data = {
+        data: {
+          type: 'article',
+          id: '1-2',
+          attributes: {
+            title: 'JSON API paints my bikeshed!',
+            body: 'The shortest article. Ever.',
+            created: '2015-05-22T14:56:29.000Z'
+          }
+        }
+      };
+
+      const deserializedData = Serializer.deserialize('articles', data);
+      expect(deserializedData).to.have.property('pk1').to.eql('1');
+      expect(deserializedData).to.have.property('pk2').to.eql('2');
+      expect(deserializedData).to.not.have.property('id');
+      done();
+    });
+
     it('should deserialize with \'alternativeKey\' option and no included', function(done) {
       const Serializer = new JSONAPISerializer();
       Serializer.register('article', {
@@ -2057,9 +2127,7 @@ describe('JSONAPISerializer', function() {
 
     it('should deserialize with \'links\' and \'meta\' properties', function(done) {
       const Serializer = new JSONAPISerializer();
-      Serializer.register('articles', {
-        id: '_id'
-      });
+      Serializer.register('articles');
 
       const data = {
         data: {

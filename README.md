@@ -24,7 +24,9 @@ Serializer.register(type, options);
 
 **Serialization options:**
 
-* **id** (optional): The key to use as the reference. Default = 'id'.
+* **id** (optional): The key to use as the reference. Default = 'id'. It can be:
+  * A _string_, the key to use as the reference.
+  * An _object_ with two function properties `serialize(data) => ({ id , attributes })` and `deserialize(data) => idAttributes`. The function `serialize` is responsible for removing the ids from the attributes.
 * **blacklist** (optional): An array of blacklisted attributes. Default = [].
 * **whitelist** (optional): An array of whitelisted attributes. Default = [].
 * **jsonapiObject** (optional): Enable/Disable [JSON API Object](http://jsonapi.org/format/#document-jsonapi-object). Default = true.
