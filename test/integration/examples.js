@@ -43,7 +43,10 @@ describe('Examples', function() {
       comments: {
         type: 'comment',
         schema: 'only-body'
-      }
+      },
+      translations: {
+        type: 'translation'
+      },
     },
     topLevelMeta: function(extraOptions) {
       return {
@@ -71,6 +74,25 @@ describe('Examples', function() {
   Serializer.register('comment', 'only-body', {
     id: '_id',
     whitelist: ['body']
+  });
+  Serializer.register('translation', {
+    id: {
+      serialize: (data) => {
+        const { id: articleId, lang, ...attributes } = data;
+        const id = `${articleId}-${lang}`;
+        return {
+          id,
+          attributes
+        }
+      },
+      deserialize: (data) => {
+        const [id, lang] = data.id.split('-');
+        return {
+          id,
+          lang,
+        };
+      },
+    },
   });
 
   it('should serialize articles data', function(done) {
@@ -116,7 +138,7 @@ describe('Examples', function() {
     expect(serializedData.data[0].links).to.have.property('self').to.eql('/articles/1');
     expect(serializedData.data[0].meta).to.have.property('meta').to.eql('metadata');
     expect(serializedData).to.have.property('included');
-    expect(serializedData.included).to.be.instanceof(Array).to.have.lengthOf(10);
+    expect(serializedData.included).to.be.instanceof(Array).to.have.lengthOf(16);
     var includedAuhor1 = _.find(serializedData.included, {
       'type': 'people',
       'id': '1'
@@ -136,6 +158,16 @@ describe('Examples', function() {
     expect(includedComment1).to.have.property('attributes');
     expect(includedComment1.attributes).to.have.property('body');
     expect(includedComment1.attributes).to.not.have.property('created');
+    var includedPublishing1 = _.find(serializedData.included, {
+      'type': 'translation',
+      'id': '1-es'
+    });
+    expect(includedPublishing1).to.have.property('attributes');
+    expect(includedPublishing1.attributes).to.have.property('title');
+    expect(includedPublishing1.attributes).to.have.property('body');
+    expect(includedPublishing1.attributes).to.have.property('created');
+    expect(includedPublishing1.attributes).to.not.have.property('id');
+    expect(includedPublishing1.attributes).to.not.have.property('lang');
     done();
   });
 
