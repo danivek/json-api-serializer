@@ -159,16 +159,7 @@ describe('JSONAPISerializer', function() {
             ...attributes,
             id
           };
-        },
-        afterDeserialize: (data) => {
-          const { id, ...attributes } = data;
-          const [pk1, pk2] = id.split('-');
-          return {
-            ...attributes,
-            pk1,
-            pk2,
-          };
-        },
+        }
       }));
       expect(serializedData).to.have.property('type').to.eql('articles');
       expect(serializedData).to.have.property('id').to.eql('1-4');
@@ -1662,17 +1653,9 @@ describe('JSONAPISerializer', function() {
       done();
     });
 
-    it('should deserialize with \'id.afterDeserialize\' options', function(done) {
+    it('should return deserialized data with option afterDeserialize', function(done) {
       const Serializer = new JSONAPISerializer();
       Serializer.register('articles', {
-        beforeSerialize: (data) => {
-          const { pk1, pk2, ...attributes } = data;
-          const id = `${pk1}-${pk2}`;
-          return {
-            ...attributes,
-            id
-          };
-        },
         afterDeserialize: (data) => {
           const { id, ...attributes } = data;
           const [pk1, pk2] = id.split('-');
