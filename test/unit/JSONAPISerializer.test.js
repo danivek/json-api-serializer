@@ -134,7 +134,7 @@ describe('JSONAPISerializer', function() {
       const singleData = {
         _id: '1',
       };
-      const serializedData = Serializer.serializeResource('articles', singleData, _.merge(defaultOptions, {
+      const serializedData = Serializer.serializeResource('articles', singleData, _.merge({}, defaultOptions, {
         id: '_id',
       }));
       expect(serializedData).to.have.property('type').to.eql('articles');
@@ -146,27 +146,29 @@ describe('JSONAPISerializer', function() {
       done();
     });
 
-    it('should return serialized data with option id.serialize', function(done) {
+    it('should return serialized data with option beforeSerialize', function(done) {
       const singleData = {
         pk1: '1',
         pk2: '4',
       };
-      const serializedData = Serializer.serializeResource('articles', singleData, _.merge(defaultOptions, {
-        id: {
-          serialize: (data) => {
-            return {
-              id: `${data.pk1}-${data.pk2}`,
-              attributes: {},
-            };
-          },
-          deserialize: (data) => {
-            const [pk1, pk2] = data.id.split('-');
-            return {
-              pk1,
-              pk2,
-            }
-          },
-        }
+      const serializedData = Serializer.serializeResource('articles', singleData, _.merge({}, defaultOptions, {
+        beforeSerialize: (data) => {
+          const { pk1, pk2, ...attributes } = data;
+          const id = `${pk1}-${pk2}`;
+          return {
+            ...attributes,
+            id
+          };
+        },
+        afterDeserialize: (data) => {
+          const { id, ...attributes } = data;
+          const [pk1, pk2] = id.split('-');
+          return {
+            ...attributes,
+            pk1,
+            pk2,
+          };
+        },
       }));
       expect(serializedData).to.have.property('type').to.eql('articles');
       expect(serializedData).to.have.property('id').to.eql('1-4');
@@ -181,9 +183,7 @@ describe('JSONAPISerializer', function() {
       const singleData = {
         id: 1,
       };
-      const serializedData = Serializer.serializeResource('articles', singleData, _.merge(defaultOptions, {
-        id: 'id',
-      }));
+      const serializedData = Serializer.serializeResource('articles', singleData, defaultOptions);
       expect(serializedData).to.have.property('type').to.eql('articles');
       expect(serializedData).to.have.property('id').to.be.a('string').to.eql('1');
       done();
@@ -1662,24 +1662,26 @@ describe('JSONAPISerializer', function() {
       done();
     });
 
-    it('should deserialize with \'id.deserialize\' options', function(done) {
+    it('should deserialize with \'id.afterDeserialize\' options', function(done) {
       const Serializer = new JSONAPISerializer();
       Serializer.register('articles', {
-        id: {
-          serialize: (data) => {
-            return {
-              id: `${data.pk1}-${data.pk2}`,
-              attributes: {},
-            };
-          },
-          deserialize: (data) => {
-            const [pk1, pk2] = data.id.split('-');
-            return {
-              pk1,
-              pk2,
-            }
-          },
-        }
+        beforeSerialize: (data) => {
+          const { pk1, pk2, ...attributes } = data;
+          const id = `${pk1}-${pk2}`;
+          return {
+            ...attributes,
+            id
+          };
+        },
+        afterDeserialize: (data) => {
+          const { id, ...attributes } = data;
+          const [pk1, pk2] = id.split('-');
+          return {
+            ...attributes,
+            pk1,
+            pk2,
+          };
+        },
       });
 
       const data = {

@@ -76,22 +76,22 @@ describe('Examples', function() {
     whitelist: ['body']
   });
   Serializer.register('translation', {
-    id: {
-      serialize: (data) => {
-        const { id: articleId, lang, ...attributes } = data;
-        const id = `${articleId}-${lang}`;
-        return {
-          id,
-          attributes
-        }
-      },
-      deserialize: (data) => {
-        const [id, lang] = data.id.split('-');
-        return {
-          id,
-          lang,
-        };
-      },
+    beforeSerialize: (data) => {
+      const { id: articleId, lang, ...attributes } = data;
+      const id = `${articleId}-${lang}`;
+      return {
+        ...attributes,
+        id
+      }
+    },
+    afterDeserialize: (data) => {
+      const { id, ...attributes } = data;
+      const [articleId, lang] = id.split('-');
+      return {
+        ...attributes,
+        id: articleId,
+        lang,
+      };
     },
   });
 
