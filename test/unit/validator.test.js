@@ -171,6 +171,26 @@ describe('validator', function () {
       done();
     });
 
+    it('incorrect beforeSerialize', (done) => {
+      expect(function () {
+        validator.validateOptions({
+          beforeSerialize: 'test',
+        });
+      }).to.throw(Error, "option 'beforeSerialize' must be function");
+
+      done();
+    });
+
+    it('incorrect afterDeserialize', (done) => {
+      expect(function () {
+        validator.validateOptions({
+          afterDeserialize: 'test',
+        });
+      }).to.throw(Error, "option 'afterDeserialize' must be function");
+
+      done();
+    });
+
     it('no type provided on relationship', (done) => {
       expect(function () {
         validator.validateOptions({
