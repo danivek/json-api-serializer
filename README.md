@@ -54,12 +54,14 @@ Serializer.register(type, options);
     * **deserialize** (optional): Describes the function which should be used to deserialize a related property which is not included in the JSON:API document. It should be:
       * A _function_ with one argument `function(data) { ... }`which defines the format to which a relation should be deserialized. By default, the ID of the related object is returned, which would be equal to `function(data) {return data.id}`. See [issue #65](https://github.com/danivek/json-api-serializer/issues/65).
 * **convertCase** (optional): Case conversion for serializing data. Value can be : `kebab-case`, `snake_case`, `camelCase`
+* **beforeSerialize** (optional): A _function_ with one argument `beforeSerialize(data) => newData` to transform data before serialization. 
 
 **Deserialization options:**
 
 * **unconvertCase** (optional): Case conversion for deserializing data. Value can be : `kebab-case`, `snake_case`, `camelCase`
 * **blacklistOnDeserialize** (optional): An array of blacklisted attributes. Default = [].
 * **whitelistOnDeserialize** (optional): An array of whitelisted attributes. Default = [].
+* **afterDeserialize** (optional): A _function_ with one argument `afterDeserialize(data) => newData` to transform data after deserialization.
 
 **Global options:**
 
@@ -522,6 +524,44 @@ const typeConfig = {
 
 const deserialized = Serializer.deserializeAsync(typeConfig, data).then(result => {
   // ...
+});
+```
+
+## Custom serialization and deserialization
+
+If your data requires some specific transformations, those can be applied using `beforeSerialize` and `afterDeserialize`
+
+Example for composite primary keys:
+
+```javascript
+Serializer.register('translation', {
+    beforeSerialize: (data) => {
+      // Exclude pk1 and pk2 from data
+      const { pk1, pk2, ...attributes } = data;
+
+      // Compute external id
+      const id = `${pk1}-${pk2}`;
+
+      // Return data with id
+      return {
+        ...attributes,
+        id
+      };
+    },
+    afterDeserialize: (data) => {
+      // Exclude id from data
+      const { id, ...attributes } = data;
+
+      // Recover PKs
+      const [pk1, pk2] = id.split('-');
+
+      // Return data with PKs
+      return {
+        ...attributes,
+        pk1,
+        pk2,
+      };
+    },
 });
 ```
 

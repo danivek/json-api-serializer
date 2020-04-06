@@ -134,7 +134,7 @@ describe('JSONAPISerializer', function() {
       const singleData = {
         _id: '1',
       };
-      const serializedData = Serializer.serializeResource('articles', singleData, _.merge(defaultOptions, {
+      const serializedData = Serializer.serializeResource('articles', singleData, _.merge({}, defaultOptions, {
         id: '_id',
       }));
       expect(serializedData).to.have.property('type').to.eql('articles');
@@ -146,13 +146,35 @@ describe('JSONAPISerializer', function() {
       done();
     });
 
+    it('should return serialized data with option beforeSerialize', function(done) {
+      const singleData = {
+        pk1: '1',
+        pk2: '4',
+      };
+      const serializedData = Serializer.serializeResource('articles', singleData, _.merge({}, defaultOptions, {
+        beforeSerialize: (data) => {
+          const { pk1, pk2, ...attributes } = data;
+          const id = `${pk1}-${pk2}`;
+          return {
+            ...attributes,
+            id
+          };
+        }
+      }));
+      expect(serializedData).to.have.property('type').to.eql('articles');
+      expect(serializedData).to.have.property('id').to.eql('1-4');
+      expect(serializedData.relationships).to.be.undefined;
+      expect(serializedData.links).to.be.undefined;
+      expect(serializedData.meta).to.be.undefined;
+
+      done();
+    });
+
     it('should return type of string for a non string id in input', function(done) {
       const singleData = {
         id: 1,
       };
-      const serializedData = Serializer.serializeResource('articles', singleData, _.merge(defaultOptions, {
-        id: 'id',
-      }));
+      const serializedData = Serializer.serializeResource('articles', singleData, defaultOptions);
       expect(serializedData).to.have.property('type').to.eql('articles');
       expect(serializedData).to.have.property('id').to.be.a('string').to.eql('1');
       done();
@@ -1631,6 +1653,39 @@ describe('JSONAPISerializer', function() {
       done();
     });
 
+    it('should return deserialized data with option afterDeserialize', function(done) {
+      const Serializer = new JSONAPISerializer();
+      Serializer.register('articles', {
+        afterDeserialize: (data) => {
+          const { id, ...attributes } = data;
+          const [pk1, pk2] = id.split('-');
+          return {
+            ...attributes,
+            pk1,
+            pk2,
+          };
+        },
+      });
+
+      const data = {
+        data: {
+          type: 'article',
+          id: '1-2',
+          attributes: {
+            title: 'JSON API paints my bikeshed!',
+            body: 'The shortest article. Ever.',
+            created: '2015-05-22T14:56:29.000Z'
+          }
+        }
+      };
+
+      const deserializedData = Serializer.deserialize('articles', data);
+      expect(deserializedData).to.have.property('pk1').to.eql('1');
+      expect(deserializedData).to.have.property('pk2').to.eql('2');
+      expect(deserializedData).to.not.have.property('id');
+      done();
+    });
+
     it('should deserialize with \'alternativeKey\' option and no included', function(done) {
       const Serializer = new JSONAPISerializer();
       Serializer.register('article', {
@@ -2057,9 +2112,7 @@ describe('JSONAPISerializer', function() {
 
     it('should deserialize with \'links\' and \'meta\' properties', function(done) {
       const Serializer = new JSONAPISerializer();
-      Serializer.register('articles', {
-        id: '_id'
-      });
+      Serializer.register('articles');
 
       const data = {
         data: {
