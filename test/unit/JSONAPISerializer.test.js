@@ -1564,6 +1564,166 @@ describe('JSONAPISerializer', function() {
       done();
     });
 
+    it('should deserialize data with circular included', function(done) {
+      const Serializer = new JSONAPISerializer();
+
+      Serializer.register('article', {
+        relationships: {
+          author: { type: 'user' },
+          user: { type: 'user' },
+          profile: { type: 'profile' }
+        },
+      });
+      
+      Serializer.register('user', {
+        relationships: {
+          profile: { type: 'profile' },
+        },
+      });
+      
+      Serializer.register('profile', {
+        relationships: {
+          user: { type: 'user' },
+        },
+      });
+
+      const data = {
+        "data": {
+          "type": "article",
+          "id": "1",
+          "attributes": {
+            "title": "title"
+          },
+          "relationships": {
+            "author": { "data": { "type": "user", "id":  "1" } },
+            "user": { "data": { "type": "user", "id":  "1" } },
+            "profile": { "data": { "type": "profile", "id":  "1" } }
+          }
+        },
+        "included": [
+          {
+            "type": "user",
+            "id": "1",
+            "attributes": {
+              "email": "user@example.com"
+            },
+            "relationships": {
+              "profile": { "data": { "type": "profile", "id":  "1" } }
+            }
+          },
+          {
+            "type": "profile",
+            "id": "1",
+            "attributes": {
+              "firstName": "first-name",
+              "lastName": "last-name"
+            },
+            "relationships": {
+              "user": { "data": { "type": "user", "id":  "1" } }
+            }
+          }
+        ]
+      }
+
+      const deserializedData = Serializer.deserialize('article', data);
+      expect(deserializedData).to.have.property('id');
+      expect(deserializedData.author).to.have.property('id');
+      expect(deserializedData.author.profile).to.have.property('id');
+      expect(deserializedData.author.profile.user).to.equal('1');
+      expect(deserializedData.user).to.have.property('id');
+      expect(deserializedData.profile).to.have.property('id');
+      done();
+    });
+
+   it('should deserialize data with circular included array', function(done) {
+    const Serializer = new JSONAPISerializer();
+
+    Serializer.register('article', {
+      relationships: {
+        author: { type: 'user' },
+        profile: {type: 'profile'}
+      },
+    });
+    
+    Serializer.register('user', {
+      relationships: {
+        profile: { type: 'profile' },
+      },
+    });
+    
+    Serializer.register('profile', {
+      relationships: {
+        user: { type: 'user' },
+        profile: {type: 'profile'}
+      },
+    });
+
+    const data = {
+      "data": {
+        "type": "article",
+        "id": "1",
+        "attributes": {
+          "title": "title"
+        },
+        "relationships": {
+          "author": { "data": [{ "type": "user", "id":  "1" }, { "type": "user", "id":  "2" }] },
+        }
+      },
+      "included": [
+        {
+          "type": "user",
+          "id": "1",
+          "attributes": {
+            "email": "user@example.com"
+          },
+          "relationships": {
+            "profile": { "data": [{ "type": "profile", "id":  "1" }] }
+          }
+        },
+        {
+          "type": "user",
+          "id": "2",
+          "attributes": {
+            "email": "user2@example.com"
+          },
+          "relationships": {
+            "profile": { "data": [{ "type": "profile", "id":  "2" }] }
+          }
+        },
+        {
+          "type": "profile",
+          "id": "1",
+          "attributes": {
+            "firstName": "first-name",
+            "lastName": "last-name"
+          },
+          "relationships": {
+            "user": { "data": { "type": "user", "id":  "1" } }
+          }
+        },
+        {
+          "type": "profile",
+          "id": "2",
+          "attributes": {
+            "firstName": "first-name",
+            "lastName": "last-name"
+          },
+          "relationships": {
+            "user": { "data": { "type": "user", "id":  "2" } }
+          }
+        }
+      ]
+    }
+
+    const deserializedData = Serializer.deserialize('article', data);
+    expect(deserializedData).to.have.property('id');
+    expect(deserializedData).to.have.property('author').to.be.instanceof(Array).to.have.length(2);
+    expect(deserializedData.author[0]).to.have.property('profile').to.be.instanceof(Array).to.have.length(1);
+    expect(deserializedData.author[0].profile[0]).to.have.property('user').to.equal('1');
+    expect(deserializedData.author[1].profile[0]).to.have.property('user').to.equal('2');
+    done();
+    });
+
     it('should deserialize with missing included relationship', function(done) {
       const Serializer = new JSONAPISerializer();
       Serializer.register('articles', {
