@@ -1171,7 +1171,7 @@ describe('JSONAPISerializer', function() {
       };
 
       const serializedData = Serializer.serialize('article', data);
-      
+
       const people1 = serializedData.included.find((include => include.type === 'people' && include.id === '1'));
       expect(people1).to.have.property('relationships');
       expect(people1.relationships).to.have.property('image');
@@ -1574,13 +1574,13 @@ describe('JSONAPISerializer', function() {
           profile: { type: 'profile' }
         },
       });
-      
+
       Serializer.register('user', {
         relationships: {
           profile: { type: 'profile' },
         },
       });
-      
+
       Serializer.register('profile', {
         relationships: {
           user: { type: 'user' },
@@ -1595,31 +1595,38 @@ describe('JSONAPISerializer', function() {
             "title": "title"
           },
           "relationships": {
-            "author": { "data": { "type": "user", "id":  "1" } },
-            "user": { "data": { "type": "user", "id":  "1" } },
-            "profile": { "data": { "type": "profile", "id":  "1" } }
+            "author": { "data": { "type": "user", "id":  "author_id" } },
+            "user": { "data": { "type": "user", "id":  "user_id" } },
+            "profile": { "data": { "type": "profile", "id":  "profile_id" } }
           }
         },
         "included": [
           {
             "type": "user",
-            "id": "1",
+            "id": "author_id",
             "attributes": {
               "email": "user@example.com"
             },
             "relationships": {
-              "profile": { "data": { "type": "profile", "id":  "1" } }
+              "profile": { "data": { "type": "profile", "id":  "profile_id" } }
             }
           },
           {
+            "type": "user",
+            "id": "user_id",
+            "attributes": {
+              "email": "user@example.com"
+            },
+          },
+          {
             "type": "profile",
-            "id": "1",
+            "id": "profile_id",
             "attributes": {
               "firstName": "first-name",
               "lastName": "last-name"
             },
             "relationships": {
-              "user": { "data": { "type": "user", "id":  "1" } }
+              "user": { "data": { "type": "user", "id":  "author_id" } }
             }
           }
         ]
@@ -1628,8 +1635,10 @@ describe('JSONAPISerializer', function() {
       const deserializedData = Serializer.deserialize('article', data);
       expect(deserializedData).to.have.property('id');
       expect(deserializedData.author).to.have.property('id');
+      expect(deserializedData.author.id).to.equal('author_id');
       expect(deserializedData.author.profile).to.have.property('id');
-      expect(deserializedData.author.profile.user).to.equal('1');
+      expect(deserializedData.author.profile.id).to.equal('profile_id');
+      expect(deserializedData.author.profile.user).to.equal('author_id');
       expect(deserializedData.user).to.have.property('id');
       expect(deserializedData.profile).to.have.property('id');
       done();
@@ -1644,13 +1653,13 @@ describe('JSONAPISerializer', function() {
         profile: {type: 'profile'}
       },
     });
-    
+
     Serializer.register('user', {
       relationships: {
         profile: { type: 'profile' },
       },
     });
-    
+
     Serializer.register('profile', {
       relationships: {
         user: { type: 'user' },
