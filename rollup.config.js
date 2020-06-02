@@ -1,12 +1,15 @@
-import babel from 'rollup-plugin-babel';
-import { uglify } from 'rollup-plugin-uglify';
-import resolve from 'rollup-plugin-node-resolve';
-import commonjs from 'rollup-plugin-commonjs';
+/* eslint-disable jsdoc/require-jsdoc */
+
+const babel = require('@rollup/plugin-babel').default;
+const resolve = require('@rollup/plugin-node-resolve').default;
+const commonjs = require('@rollup/plugin-commonjs');
+const { terser } = require('rollup-plugin-terser');
 
 function buildBabelConfig() {
   return {
+    babelHelpers: 'bundled',
     babelrc: false,
-    presets: [['@babel/preset-env']]
+    presets: [['@babel/preset-env']],
   };
 }
 
@@ -16,7 +19,7 @@ function buildConfig({
   minified = false,
   includeExtension = true,
   extension = format,
-  sourceMap = false
+  sourceMap = false,
 }) {
   function buildFileName() {
     return `dist/json-api-serializer${includeExtension ? `.${extension}` : ''}${
@@ -27,7 +30,7 @@ function buildConfig({
   function buildPlugins() {
     const plugins = [resolve(), commonjs()];
     if (transpiled) plugins.push(babel(buildBabelConfig()));
-    if (minified) plugins.push(uglify());
+    if (minified) plugins.push(terser());
     return plugins;
   }
 
@@ -37,24 +40,22 @@ function buildConfig({
       name: 'JSONAPISerializer',
       format,
       file: buildFileName(),
-      sourcemap: sourceMap
+      sourcemap: sourceMap,
     },
-    plugins: buildPlugins()
+    plugins: buildPlugins(),
   };
 }
 
 const configs = [
   buildConfig({ format: 'amd' }),
-  // buildConfig({ format: 'cjs' }),
   buildConfig({ format: 'umd' }),
   buildConfig({
     format: 'umd',
     minified: true,
     includeExtension: false,
-    sourceMap: true
+    sourceMap: true,
   }),
-  buildConfig({ format: 'esm', transpiled: false })
-  // buildConfig({ format: 'system' })
+  buildConfig({ format: 'esm', transpiled: false }),
 ];
 
 export default configs;

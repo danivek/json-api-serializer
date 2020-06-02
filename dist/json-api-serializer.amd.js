@@ -1,6 +1,8 @@
 define(function () { 'use strict';
 
   function _typeof(obj) {
+    "@babel/helpers - typeof";
+
     if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") {
       _typeof = function (obj) {
         return typeof obj;
@@ -51,24 +53,71 @@ define(function () { 'use strict';
     return obj;
   }
 
+  function ownKeys(object, enumerableOnly) {
+    var keys = Object.keys(object);
+
+    if (Object.getOwnPropertySymbols) {
+      var symbols = Object.getOwnPropertySymbols(object);
+      if (enumerableOnly) symbols = symbols.filter(function (sym) {
+        return Object.getOwnPropertyDescriptor(object, sym).enumerable;
+      });
+      keys.push.apply(keys, symbols);
+    }
+
+    return keys;
+  }
+
+  function _objectSpread2(target) {
+    for (var i = 1; i < arguments.length; i++) {
+      var source = arguments[i] != null ? arguments[i] : {};
+
+      if (i % 2) {
+        ownKeys(Object(source), true).forEach(function (key) {
+          _defineProperty(target, key, source[key]);
+        });
+      } else if (Object.getOwnPropertyDescriptors) {
+        Object.defineProperties(target, Object.getOwnPropertyDescriptors(source));
+      } else {
+        ownKeys(Object(source)).forEach(function (key) {
+          Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key));
+        });
+      }
+    }
+
+    return target;
+  }
+
   function _toConsumableArray(arr) {
-    return _arrayWithoutHoles(arr) || _iterableToArray(arr) || _nonIterableSpread();
+    return _arrayWithoutHoles(arr) || _iterableToArray(arr) || _unsupportedIterableToArray(arr) || _nonIterableSpread();
   }
 
   function _arrayWithoutHoles(arr) {
-    if (Array.isArray(arr)) {
-      for (var i = 0, arr2 = new Array(arr.length); i < arr.length; i++) arr2[i] = arr[i];
-
-      return arr2;
-    }
+    if (Array.isArray(arr)) return _arrayLikeToArray(arr);
   }
 
   function _iterableToArray(iter) {
-    if (Symbol.iterator in Object(iter) || Object.prototype.toString.call(iter) === "[object Arguments]") return Array.from(iter);
+    if (typeof Symbol !== "undefined" && Symbol.iterator in Object(iter)) return Array.from(iter);
+  }
+
+  function _unsupportedIterableToArray(o, minLen) {
+    if (!o) return;
+    if (typeof o === "string") return _arrayLikeToArray(o, minLen);
+    var n = Object.prototype.toString.call(o).slice(8, -1);
+    if (n === "Object" && o.constructor) n = o.constructor.name;
+    if (n === "Map" || n === "Set") return Array.from(o);
+    if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return _arrayLikeToArray(o, minLen);
+  }
+
+  function _arrayLikeToArray(arr, len) {
+    if (len == null || len > arr.length) len = arr.length;
+
+    for (var i = 0, arr2 = new Array(len); i < len; i++) arr2[i] = arr[i];
+
+    return arr2;
   }
 
   function _nonIterableSpread() {
-    throw new TypeError("Invalid attempt to spread non-iterable instance");
+    throw new TypeError("Invalid attempt to spread non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method.");
   }
 
   var commonjsGlobal = typeof globalThis !== 'undefined' ? globalThis : typeof window !== 'undefined' ? window : typeof global !== 'undefined' ? global : typeof self !== 'undefined' ? self : {};
@@ -1317,26 +1366,159 @@ define(function () { 'use strict';
 
   var lodash_set = set;
 
+  /* eslint-disable */
+  // Influenced by http://jsfiddle.net/2baax9nk/5/
+  var Node = function Node(key, data) {
+    _classCallCheck(this, Node);
+
+    this.key = key;
+    this.data = data;
+    this.previous = null;
+    this.next = null;
+  };
+
+  var lruCache = /*#__PURE__*/function () {
+    function LRU(capacity) {
+      _classCallCheck(this, LRU);
+
+      this.capacity = capacity === 0 ? Infinity : capacity;
+      this.map = {};
+      this.head = null;
+      this.tail = null;
+    }
+
+    _createClass(LRU, [{
+      key: "get",
+      value: function get(key) {
+        // Existing item
+        if (this.map[key] !== undefined) {
+          // Move to the first place
+          var node = this.map[key];
+
+          this._moveFirst(node); // Return
+
+
+          return node.data;
+        } // Not found
+
+
+        return undefined;
+      }
+    }, {
+      key: "set",
+      value: function set(key, value) {
+        // Existing item
+        if (this.map[key] !== undefined) {
+          // Move to the first place
+          var _node = this.map[key];
+          _node.data = value;
+
+          this._moveFirst(_node);
+
+          return;
+        } // Ensuring the cache is within capacity
+
+
+        if (Object.keys(this.map).length >= this.capacity) {
+          var id = this.tail.key;
+
+          this._removeLast();
+
+          delete this.map[id];
+        } // New Item
+
+
+        var node = new Node(key, value);
+
+        this._add(node);
+
+        this.map[key] = node;
+      }
+    }, {
+      key: "_add",
+      value: function _add(node) {
+        node.next = null;
+        node.previous = node.next; // first item
+
+        if (this.head === null) {
+          this.head = node;
+          this.tail = node;
+        } else {
+          // adding to existing items
+          this.head.previous = node;
+          node.next = this.head;
+          this.head = node;
+        }
+      }
+    }, {
+      key: "_remove",
+      value: function _remove(node) {
+        // only item in the cache
+        if (this.head === node && this.tail === node) {
+          this.tail = null;
+          this.head = this.tail;
+          return;
+        } // remove from head
+
+
+        if (this.head === node) {
+          this.head.next.previous = null;
+          this.head = this.head.next;
+          return;
+        } // remove from tail
+
+
+        if (this.tail === node) {
+          this.tail.previous.next = null;
+          this.tail = this.tail.previous;
+          return;
+        } // remove from middle
+
+
+        node.previous.next = node.next;
+        node.next.previous = node.previous;
+      }
+    }, {
+      key: "_moveFirst",
+      value: function _moveFirst(node) {
+        this._remove(node);
+
+        this._add(node);
+      }
+    }, {
+      key: "_removeLast",
+      value: function _removeLast() {
+        this._remove(this.tail);
+      }
+    }]);
+
+    return LRU;
+  }();
+
   /* eslint-disable no-sequences */
 
   /* eslint-disable no-return-assign */
   // https://github.com/you-dont-need/You-Dont-Need-Lodash-Underscore#_get
 
   var get = function get(obj, path, defaultValue) {
-    return String.prototype.split.call(path, /[,[\].]+?/).filter(Boolean).reduce(function (a, c) {
-      return Object.hasOwnProperty.call(a, c) ? a[c] : defaultValue;
+    var result = String.prototype.split.call(path, /[,[\].]+?/).filter(Boolean).reduce(function (res, key) {
+      return res !== null && res !== undefined ? res[key] : res;
     }, obj);
-  };
+    return result === undefined || result === obj ? defaultValue : result;
+  }; // https://github.com/30-seconds/30-seconds-of-code/blob/master/snippets/pick.md
+
 
   var pick = function pick(obj, arr) {
     return arr.reduce(function (acc, curr) {
       return curr in obj && (acc[curr] = obj[curr]), acc;
     }, {});
-  };
+  }; // https://github.com/30-seconds/30-seconds-of-code/blob/master/snippets/isEmpty.md
+
 
   var isEmpty = function isEmpty(val) {
     return val == null || !(Object.keys(val) || val).length;
-  };
+  }; // https://github.com/30-seconds/30-seconds-of-code/blob/master/snippets/omit.md
+
 
   var omit = function omit(obj, arr) {
     return Object.keys(obj).filter(function (k) {
@@ -1344,29 +1526,39 @@ define(function () { 'use strict';
     }).reduce(function (acc, key) {
       return acc[key] = obj[key], acc;
     }, {});
-  };
+  }; // https://github.com/30-seconds/30-seconds-of-code/blob/master/snippets/isObjectLike.md
+
+
+  var isObjectLike$1 = function isObjectLike(val) {
+    return val !== null && _typeof(val) === 'object';
+  }; // https://github.com/30-seconds/30-seconds-of-code/blob/master/snippets/isPlainObject.md
+
 
   var isPlainObject = function isPlainObject(val) {
     return !!val && _typeof(val) === 'object' && val.constructor === Object;
-  };
+  }; // https://github.com/30-seconds/30-seconds-of-code/blob/master/snippets/transform.md
+
 
   var transform = function transform(obj, fn, acc) {
     return Object.keys(obj).reduce(function (a, k) {
       return fn(a, obj[k], k, obj);
     }, acc);
-  };
+  }; // https://github.com/30-seconds/30-seconds-of-code/blob/master/snippets/toKebabCase.md
+
 
   var toKebabCase = function toKebabCase(str) {
     return str && str.match(/[A-Z]{2,}(?=[A-Z][a-z]+[0-9]*|\b)|[A-Z]?[a-z]+[0-9]*|[A-Z]|[0-9]+/g).map(function (x) {
       return x.toLowerCase();
     }).join('-');
-  };
+  }; // https://github.com/30-seconds/30-seconds-of-code/blob/master/snippets/toSnakeCase.md
+
 
   var toSnakeCase = function toSnakeCase(str) {
     return str && str.match(/[A-Z]{2,}(?=[A-Z][a-z]+[0-9]*|\b)|[A-Z]?[a-z]+[0-9]*|[A-Z]|[0-9]+/g).map(function (x) {
       return x.toLowerCase();
     }).join('_');
-  };
+  }; // https://github.com/30-seconds/30-seconds-of-code/blob/master/snippets/toCamelCase.md
+
 
   var toCamelCase = function toCamelCase(str) {
     var s = str && str.match(/[A-Z]{2,}(?=[A-Z][a-z]+[0-9]*|\b)|[A-Z]?[a-z]+[0-9]*|[A-Z]|[0-9]+/g).map(function (x) {
@@ -1382,22 +1574,24 @@ define(function () { 'use strict';
     isEmpty: isEmpty,
     omit: omit,
     isPlainObject: isPlainObject,
+    isObjectLike: isObjectLike$1,
     transform: transform,
     toKebabCase: toKebabCase,
     toSnakeCase: toSnakeCase,
-    toCamelCase: toCamelCase
+    toCamelCase: toCamelCase,
+    LRU: lruCache
   };
 
   /**
    * Validate and apply default values to resource's configuration options.
    *
-   * @method validateOptions
+   * @function validateOptions
    * @private
-   * @param {Object} options Configuration options.
-   * @return {Object}
+   * @param {object} options Configuration options.
+   * @returns {object} valid configuration options.
    */
   function validateOptions(options) {
-    options = Object.assign({
+    options = _objectSpread2({
       id: 'id',
       blacklist: [],
       whitelist: [],
@@ -1421,10 +1615,12 @@ define(function () { 'use strict';
     if (typeof options.jsonapiObject !== 'boolean') throw new Error("option 'jsonapiObject' must a boolean");
     if (options.convertCase && !['kebab-case', 'snake_case', 'camelCase'].includes(options.convertCase)) throw new Error("option 'convertCase' must be one of 'kebab-case', 'snake_case', 'camelCase'");
     if (options.unconvertCase && !['kebab-case', 'snake_case', 'camelCase'].includes(options.unconvertCase)) throw new Error("option 'unconvertCase' must be one of 'kebab-case', 'snake_case', 'camelCase'");
+    if (options.beforeSerialize && typeof options.beforeSerialize !== 'function') throw new Error("option 'beforeSerialize' must be function");
+    if (options.afterDeserialize && typeof options.afterDeserialize !== 'function') throw new Error("option 'afterDeserialize' must be function");
     var _options = options,
         relationships = _options.relationships;
     Object.keys(relationships).forEach(function (key) {
-      relationships[key] = Object.assign({
+      relationships[key] = _objectSpread2({
         schema: 'default',
         links: {},
         meta: {}
@@ -1442,15 +1638,15 @@ define(function () { 'use strict';
   /**
    * Validate and apply default values to the dynamic type object option.
    *
-   * @method validateDynamicTypeOptions
+   * @function validateDynamicTypeOptions
    * @private
-   * @param {Object} options dynamic type object option.
-   * @return {Object}
+   * @param {object} options dynamic type object option.
+   * @returns {object} valid dynamic type options.
    */
 
 
   function validateDynamicTypeOptions(options) {
-    options = Object.assign({
+    options = _objectSpread2({
       topLevelLinks: {},
       topLevelMeta: {},
       jsonapiObject: true
@@ -1470,10 +1666,10 @@ define(function () { 'use strict';
   /**
    * Validate a JSONAPI error object
    *
-   * @method validateError
+   * @function validateError
    * @private
-   * @param {Object} err a JSONAPI error object
-   * @return {Object}
+   * @param {object} err a JSONAPI error object
+   * @returns {object} JSONAPI  valid error object
    */
 
 
@@ -1552,12 +1748,14 @@ define(function () { 'use strict';
       isEmpty$1 = helpers.isEmpty,
       omit$1 = helpers.omit,
       isPlainObject$1 = helpers.isPlainObject,
+      isObjectLike$2 = helpers.isObjectLike,
       transform$1 = helpers.transform,
       get$1 = helpers.get,
       set$1 = helpers.set,
       toCamelCase$1 = helpers.toCamelCase,
       toKebabCase$1 = helpers.toKebabCase,
-      toSnakeCase$1 = helpers.toSnakeCase;
+      toSnakeCase$1 = helpers.toSnakeCase,
+      LRU = helpers.LRU;
   var validateOptions$1 = validator.validateOptions,
       validateDynamicTypeOptions$1 = validator.validateDynamicTypeOptions,
       validateError$1 = validator.validateError;
@@ -1571,25 +1769,32 @@ define(function () { 'use strict';
    * const serializer = new JSONAPISerializer();
    *
    * @class JSONAPISerializer
-   * @param {Object} [opts] Global options.
+   * @param {object} [opts] Global options.
    */
 
-  var JSONAPISerializer_1 =
-  /*#__PURE__*/
-  function () {
+  var JSONAPISerializer_1 = /*#__PURE__*/function () {
     function JSONAPISerializer(opts) {
       _classCallCheck(this, JSONAPISerializer);
 
       this.opts = opts || {};
-      this.schemas = {};
+      this.schemas = {}; // Size of cache used for convertCase, 0 results in an infinitely sized cache
+
+      var _this$opts$convertCas = this.opts.convertCaseCacheSize,
+          convertCaseCacheSize = _this$opts$convertCas === void 0 ? 5000 : _this$opts$convertCas; // Cache of strings to convert to their converted values per conversion type
+
+      this.convertCaseMap = {
+        camelCase: new LRU(convertCaseCacheSize),
+        kebabCase: new LRU(convertCaseCacheSize),
+        snakeCase: new LRU(convertCaseCacheSize)
+      };
     }
     /**
      * Register a resource with its type, schema name, and configuration options.
      *
-     * @method JSONAPISerializer#register
+     * @function JSONAPISerializer#register
      * @param {string} type resource's type.
-     * @param {string} [schema=default] schema name.
-     * @param {Object} [options] options.
+     * @param {string|object} [schema='default'] schema name.
+     * @param {object} [options] options.
      */
 
 
@@ -1602,7 +1807,7 @@ define(function () { 'use strict';
         }
 
         schema = schema || 'default';
-        options = Object.assign({}, this.opts, options);
+        options = _objectSpread2(_objectSpread2({}, this.opts), options);
         this.schemas[type] = this.schemas[type] || {};
         this.schemas[type][schema] = validateOptions$1(options);
       }
@@ -1611,17 +1816,21 @@ define(function () { 'use strict';
        * Input data can be a simple object or an array of objects.
        *
        * @see {@link http://jsonapi.org/format/#document-top-level}
-       * @method JSONAPISerializer#serialize
-       * @param {string|Object} type resource's type as string or a dynamic type options as object.
-       * @param {Object|Object[]} data input data.
-       * @param {string} [schema=default] resource's schema name.
-       * @param {Object} [extraData] additional data that can be used in topLevelMeta options.
-       * @return {Object} serialized data.
+       * @function JSONAPISerializer#serialize
+       * @param {string|object} type resource's type as string or a dynamic type options as object.
+       * @param {object|object[]} data input data.
+       * @param {string|object} [schema='default'] resource's schema name.
+       * @param {object} [extraData] additional data that can be used in topLevelMeta options.
+       * @param {boolean} [excludeData] boolean that can be set to exclude the `data` property in serialized data.
+       * @param {object} [overrideSchemaOptions=] additional schema options, a map of types with options to override
+       * @returns {object} serialized data.
        */
 
     }, {
       key: "serialize",
-      value: function serialize(type, data, schema, extraData) {
+      value: function serialize(type, data, schema, extraData, excludeData) {
+        var overrideSchemaOptions = arguments.length > 5 && arguments[5] !== undefined ? arguments[5] : {};
+
         // Support optional arguments (schema)
         if (arguments.length === 3) {
           if (_typeof(schema) === 'object') {
@@ -1652,13 +1861,30 @@ define(function () { 'use strict';
           options = this.schemas[type][schema];
         }
 
+        var overrideType = isDynamicType ? type.type : type;
+
+        if (overrideSchemaOptions[overrideType]) {
+          // Merge default (registered) options and extra options into new options object
+          options = _objectSpread2(_objectSpread2({}, options), overrideSchemaOptions[overrideType]);
+        }
+
+        var dataProperty;
+
+        if (excludeData) {
+          dataProperty = undefined;
+        } else if (isDynamicType) {
+          dataProperty = this.serializeMixedResource(options, data, included, extraData, overrideSchemaOptions);
+        } else {
+          dataProperty = this.serializeResource(type, data, options, included, extraData, overrideSchemaOptions);
+        }
+
         return {
           jsonapi: options.jsonapiObject ? {
             version: '1.0'
           } : undefined,
           meta: this.processOptionsValues(data, extraData, options.topLevelMeta, 'extraData'),
           links: this.processOptionsValues(data, extraData, options.topLevelLinks, 'extraData'),
-          data: isDynamicType ? this.serializeMixedResource(options, data, included, extraData) : this.serializeResource(type, data, options, included, extraData),
+          data: dataProperty,
           included: included.size ? _toConsumableArray(included.values()) : undefined
         };
       }
@@ -1667,18 +1893,22 @@ define(function () { 'use strict';
        * Input data can be a simple object or an array of objects.
        *
        * @see {@link http://jsonapi.org/format/#document-top-level}
-       * @method JSONAPISerializer#serializeAsync
-       * @param {string} type resource's type.
-       * @param {Object|Object[]} data input data.
-       * @param {string} [schema=default] resource's schema name.
-       * @param {Object} [extraData] additional data that can be used in topLevelMeta options.
-       * @return {Promise} resolves with serialized data.
+       * @function JSONAPISerializer#serializeAsync
+       * @param {string|object} type resource's type or an object with a dynamic type resolved from data..
+       * @param {object|object[]} data input data.
+       * @param {string} [schema='default'] resource's schema name.
+       * @param {object} [extraData] additional data that can be used in topLevelMeta options.
+       * @param {boolean} [excludeData] boolean that can be set to exclude the `data` property in serialized data.
+       * @param {object} [overrideSchemaOptions=] additional schema options, a map of types with options to override
+       * @returns {Promise} resolves with serialized data.
        */
 
     }, {
       key: "serializeAsync",
-      value: function serializeAsync(type, data, schema, extraData) {
+      value: function serializeAsync(type, data, schema, extraData, excludeData) {
         var _this = this;
+
+        var overrideSchemaOptions = arguments.length > 5 && arguments[5] !== undefined ? arguments[5] : {};
 
         // Support optional arguments (schema)
         if (arguments.length === 3) {
@@ -1713,16 +1943,32 @@ define(function () { 'use strict';
           options = this.schemas[type][schema];
         }
 
+        var overrideType = isDynamicType ? type.type : type;
+
+        if (overrideSchemaOptions[overrideType]) {
+          // Merge default (registered) options and extra options into new options object
+          options = _objectSpread2(_objectSpread2({}, options), overrideSchemaOptions[overrideType]);
+        }
+
         return new Promise(function (resolve, reject) {
+          /**
+           * Non-blocking serialization using the immediate queue.
+           *
+           * @see {@link https://nodejs.org/en/docs/guides/event-loop-timers-and-nexttick/}
+           */
           function next() {
             setImmediate(function () {
+              if (excludeData) {
+                return resolve();
+              }
+
               if (i >= arrayData.length) {
                 return resolve(serializedData);
               }
 
               try {
                 // Serialize a single item of the data-array.
-                var serializedItem = isDynamicType ? that.serializeMixedResource(type, arrayData[i], included, extraData) : that.serializeResource(type, arrayData[i], options, included, extraData);
+                var serializedItem = isDynamicType ? that.serializeMixedResource(type, arrayData[i], included, extraData, overrideSchemaOptions) : that.serializeResource(type, arrayData[i], options, included, extraData, overrideSchemaOptions);
 
                 if (serializedItem !== null) {
                   serializedData.push(serializedItem);
@@ -1738,6 +1984,16 @@ define(function () { 'use strict';
 
           next();
         }).then(function (result) {
+          var dataProperty;
+
+          if (typeof result === 'undefined') {
+            dataProperty = undefined;
+          } else if (isDataArray) {
+            dataProperty = result;
+          } else {
+            dataProperty = result[0] || null;
+          }
+
           return {
             jsonapi: options.jsonapiObject ? {
               version: '1.0'
@@ -1746,7 +2002,7 @@ define(function () { 'use strict';
             links: _this.processOptionsValues(data, extraData, options.topLevelLinks, 'extraData'),
             // If the source data was an array, we just pass the serialized data array.
             // Otherwise we try to take the first (and only) item of it or pass null.
-            data: isDataArray ? result : result[0] || null,
+            data: dataProperty,
             included: included.size ? _toConsumableArray(included.values()) : undefined
           };
         });
@@ -1755,11 +2011,11 @@ define(function () { 'use strict';
        * Deserialize JSON API document data.
        * Input data can be a simple object or an array of objects.
        *
-       * @method JSONAPISerializer#deserialize
-       * @param {string|Object} type resource's type as string or an object with a dynamic type resolved from data.
-       * @param {Object} data JSON API input data.
-       * @param {string} [schema=default] resource's schema name.
-       * @return {Object} deserialized data.
+       * @function JSONAPISerializer#deserialize
+       * @param {string|object} type resource's type as string or an object with a dynamic type resolved from data.
+       * @param {object} data JSON API input data.
+       * @param {string} [schema='default'] resource's schema name.
+       * @returns {object} deserialized data.
        */
 
     }, {
@@ -1795,11 +2051,11 @@ define(function () { 'use strict';
        * Asynchronously Deserialize JSON API document data.
        * Input data can be a simple object or an array of objects.
        *
-       * @method JSONAPISerializer#deserializeAsync
-       * @param {string|Object} type resource's type as string or an object with a dynamic type resolved from data.
-       * @param {Object} data JSON API input data.
-       * @param {string} [schema=default] resource's schema name.
-       * @return {Promise} resolves with serialized data.
+       * @function JSONAPISerializer#deserializeAsync
+       * @param {string|object} type resource's type as string or an object with a dynamic type resolved from data.
+       * @param {object} data JSON API input data.
+       * @param {string} [schema='default'] resource's schema name.
+       * @returns {Promise} resolves with serialized data.
        */
 
     }, {
@@ -1825,6 +2081,11 @@ define(function () { 'use strict';
         var deserializedData = [];
         var that = this;
         return new Promise(function (resolve, reject) {
+          /**
+           * Non-blocking deserialization using the immediate queue.
+           *
+           * @see {@link https://nodejs.org/en/docs/guides/event-loop-timers-and-nexttick/}
+           */
           function next() {
             setImmediate(function () {
               if (i >= arrayData.length) {
@@ -1853,14 +2114,27 @@ define(function () { 'use strict';
        *  - A JSON API error object or an array of JSON API error object.
        *
        * @see {@link http://jsonapi.org/format/#errors}
-       * @method JSONAPISerializer#serializeError
-       * @param {Error|Error[]|Object|Object[]} error an Error, an array of Error, a JSON API error object, an array of JSON API error object
-       * @return {Promise} resolves with serialized error.
+       * @function JSONAPISerializer#serializeError
+       * @param {Error|Error[]|object|object[]} error an Error, an array of Error, a JSON API error object, an array of JSON API error object.
+       * @returns {Promise} resolves with serialized error.
        */
 
     }, {
       key: "serializeError",
       value: function serializeError(error) {
+        /**
+         * An Error object enhanced with status or/and custom code properties.
+         *
+         * @typedef {Error} ErrorWithStatus
+         * @property {string} [status] status code error
+         * @property {string} [code] code error
+         */
+
+        /**
+         * @private
+         * @param {Error|ErrorWithStatus|object} err an Error, a JSON API error object or an ErrorWithStatus.
+         * @returns {object} valid JSON API error.
+         */
         function convertToError(err) {
           var serializedError;
 
@@ -1869,6 +2143,7 @@ define(function () { 'use strict';
             serializedError = {
               status: status && status.toString(),
               code: err.code,
+              title: err.title || err.constructor.name,
               detail: err.message
             };
           } else {
@@ -1888,31 +2163,34 @@ define(function () { 'use strict';
        * Deserialize a single JSON API resource.
        * Input data must be a simple object.
        *
-       * @method JSONAPISerializer#deserializeResource
-       * @param {string|Object} type resource's type as string or an object with a dynamic type resolved from data.
-       * @param {Object} data JSON API resource data.
-       * @param {string} [schema=default] resource's schema name.
-       * @param {Map<string:Object>} included.
-       * @return {Object} deserialized data.
+       * @function JSONAPISerializer#deserializeResource
+       * @param {string|object} type resource's type as string or an object with a dynamic type resolved from data.
+       * @param {object} data JSON API resource data.
+       * @param {string} [schema='default'] resource's schema name.
+       * @param {Map<string, object>} included Included resources.
+       * @param {string[]} lineage resource identifiers already deserialized to prevent circular references.
+       * @returns {object} deserialized data.
        */
 
     }, {
       key: "deserializeResource",
-      value: function deserializeResource(type, data, schema, included) {
+      value: function deserializeResource(type, data) {
         var _this3 = this;
+
+        var schema = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : 'default';
+        var included = arguments.length > 3 ? arguments[3] : undefined;
+        var lineage = arguments.length > 4 && arguments[4] !== undefined ? arguments[4] : [];
 
         if (_typeof(type) === 'object') {
           type = typeof type.type === 'function' ? type.type(data) : get$1(data, type.type);
+        }
 
-          if (!type) {
-            throw new Error("No type can be resolved from data: ".concat(JSON.stringify(data)));
-          }
+        if (!type) {
+          throw new Error("No type can be resolved from data: ".concat(JSON.stringify(data)));
+        }
 
-          if (!this.schemas[type]) {
-            throw new Error("No type registered for ".concat(type));
-          }
-
-          schema = 'default';
+        if (!this.schemas[type]) {
+          throw new Error("No type registered for ".concat(type));
         }
 
         var options = this.schemas[type][schema];
@@ -1932,30 +2210,48 @@ define(function () { 'use strict';
         if (data.relationships) {
           Object.keys(data.relationships).forEach(function (relationshipProperty) {
             var relationship = data.relationships[relationshipProperty];
-            var relationshipKey = options.unconvertCase ? _this3._convertCase(relationshipProperty, options.unconvertCase) : relationshipProperty; // Support alternativeKey options for relationships
-
-            if (options.relationships[relationshipKey] && options.relationships[relationshipKey].alternativeKey) {
-              relationshipKey = options.relationships[relationshipKey].alternativeKey;
-            }
+            var relationshipKey = options.unconvertCase ? _this3._convertCase(relationshipProperty, options.unconvertCase) : relationshipProperty;
+            var relationshipOptions = options.relationships[relationshipKey];
 
             var deserializeFunction = function deserializeFunction(relationshipData) {
-              if (options.relationships[relationshipKey] && options.relationships[relationshipProperty].deserialize) {
-                return options.relationships[relationshipProperty].deserialize(relationshipData);
+              if (relationshipOptions && relationshipOptions.deserialize) {
+                return relationshipOptions.deserialize(relationshipData);
               }
 
               return relationshipData.id;
             };
 
             if (relationship.data !== undefined) {
-              if (Array.isArray(relationship.data)) {
-                set$1(deserializedData, relationshipKey, relationship.data.map(function (d) {
-                  return included ? _this3.deserializeIncluded(d.type, d.id, options.relationships[relationshipProperty], included) : deserializeFunction(d);
-                }));
-              } else if (relationship.data === null) {
+              if (relationship.data === null) {
                 // null data
-                set$1(deserializedData, relationshipKey, null);
+                set$1(deserializedData, relationshipOptions && relationshipOptions.alternativeKey || relationshipKey, null);
               } else {
-                set$1(deserializedData, relationshipKey, included ? _this3.deserializeIncluded(relationship.data.type, relationship.data.id, options.relationships[relationshipProperty], included) : deserializeFunction(relationship.data));
+                if (relationshipOptions && relationshipOptions.alternativeKey || !included) {
+                  set$1(deserializedData, relationshipOptions && relationshipOptions.alternativeKey || relationshipKey, Array.isArray(relationship.data) ? relationship.data.map(function (d) {
+                    return deserializeFunction(d);
+                  }) : deserializeFunction(relationship.data));
+                }
+
+                if (included) {
+                  var deserializeIncludedRelationship = function deserializeIncludedRelationship(relationshipData) {
+                    var lineageCopy = _toConsumableArray(lineage); // Prevent circular relationships
+
+
+                    var lineageKey = "".concat(relationshipData.type, "-").concat(relationshipData.id);
+                    var isCircular = lineageCopy.includes(lineageKey);
+
+                    if (isCircular) {
+                      return deserializeFunction(relationshipData);
+                    }
+
+                    lineageCopy.push(lineageKey);
+                    return _this3.deserializeIncluded(relationshipData.type, relationshipData.id, relationshipOptions, included, lineageCopy);
+                  };
+
+                  set$1(deserializedData, relationshipKey, Array.isArray(relationship.data) ? relationship.data.map(function (d) {
+                    return deserializeIncludedRelationship(d);
+                  }) : deserializeIncludedRelationship(relationship.data));
+                }
               }
             }
           });
@@ -1973,11 +2269,15 @@ define(function () { 'use strict';
           deserializedData.meta = data.meta;
         }
 
+        if (options.afterDeserialize) {
+          return options.afterDeserialize(deserializedData);
+        }
+
         return deserializedData;
       }
     }, {
       key: "deserializeIncluded",
-      value: function deserializeIncluded(type, id, relationshipOpts, included) {
+      value: function deserializeIncluded(type, id, relationshipOpts, included, lineage) {
         var includedResource = included.find(function (resource) {
           return resource.type === type && resource.id === id;
         });
@@ -1986,26 +2286,29 @@ define(function () { 'use strict';
           return id;
         }
 
-        return this.deserializeResource(type, includedResource, relationshipOpts.schema, included);
+        return this.deserializeResource(type, includedResource, relationshipOpts.schema, included, lineage);
       }
       /**
        * Serialize resource objects.
        *
        * @see {@link http://jsonapi.org/format/#document-resource-objects}
-       * @method JSONAPISerializer#serializeDocument
+       * @function JSONAPISerializer#serializeDocument
        * @private
        * @param {string} type resource's type.
-       * @param {Object|Object[]} data input data.
-       * @param {options} options resource's configuration options.
-       * @param {Map<string:Object>} included.
-       * @param {Object} extraData additional data.
-       * @return {Object|Object[]} serialized data.
+       * @param {object|object[]} data input data.
+       * @param {object} options resource's configuration options.
+       * @param {Map<string, object>} [included] Included resources.
+       * @param {object} [extraData] additional data.
+       * @param {object} [overrideSchemaOptions=] additional schema options, a map of types with options to override
+       * @returns {object|object[]} serialized data.
        */
 
     }, {
       key: "serializeResource",
       value: function serializeResource(type, data, options, included, extraData) {
         var _this4 = this;
+
+        var overrideSchemaOptions = arguments.length > 5 && arguments[5] !== undefined ? arguments[5] : {};
 
         if (isEmpty$1(data)) {
           // Return [] or null
@@ -2014,15 +2317,19 @@ define(function () { 'use strict';
 
         if (Array.isArray(data)) {
           return data.map(function (d) {
-            return _this4.serializeResource(type, d, options, included, extraData);
+            return _this4.serializeResource(type, d, options, included, extraData, overrideSchemaOptions);
           });
+        }
+
+        if (options.beforeSerialize) {
+          data = options.beforeSerialize(data);
         }
 
         return {
           type: type,
           id: data[options.id] ? data[options.id].toString() : undefined,
           attributes: this.serializeAttributes(data, options),
-          relationships: this.serializeRelationships(data, options, included, extraData),
+          relationships: this.serializeRelationships(data, options, included, extraData, overrideSchemaOptions),
           meta: this.processOptionsValues(data, extraData, options.meta),
           links: this.processOptionsValues(data, extraData, options.links)
         };
@@ -2031,19 +2338,22 @@ define(function () { 'use strict';
        * Serialize mixed resource object with a dynamic type resolved from data
        *
        * @see {@link http://jsonapi.org/format/#document-resource-objects}
-       * @method JSONAPISerializer#serializeMixedResource
+       * @function JSONAPISerializer#serializeMixedResource
        * @private
-       * @param {Object} typeOption a dynamic type options.
-       * @param {Object|Object[]} data input data.
-       * @param {Map<string:Object>} included.
-       * @param {Object} extraData additional data.
-       * @return {Object|Object[]} serialized data.
+       * @param {object} typeOption a dynamic type options.
+       * @param {object|object[]} data input data.
+       * @param {Map<string, object>} [included] Included resources.
+       * @param {object} [extraData] additional data.
+       * @param {object} [overrideSchemaOptions=] additional schema options, a map of types with options to override
+       * @returns {object|object[]} serialized data.
        */
 
     }, {
       key: "serializeMixedResource",
       value: function serializeMixedResource(typeOption, data, included, extraData) {
         var _this5 = this;
+
+        var overrideSchemaOptions = arguments.length > 4 && arguments[4] !== undefined ? arguments[4] : {};
 
         if (isEmpty$1(data)) {
           // Return [] or null
@@ -2052,7 +2362,7 @@ define(function () { 'use strict';
 
         if (Array.isArray(data)) {
           return data.map(function (d) {
-            return _this5.serializeMixedResource(typeOption, d, included, extraData);
+            return _this5.serializeMixedResource(typeOption, d, included, extraData, overrideSchemaOptions);
           });
         } // Resolve type from data (can be a string or a function deriving a type-string from each data-item)
 
@@ -2067,17 +2377,24 @@ define(function () { 'use strict';
           throw new Error("No type registered for ".concat(type));
         }
 
-        return this.serializeResource(type, data, this.schemas[type]["default"], included, extraData);
+        var options = this.schemas[type]["default"];
+
+        if (overrideSchemaOptions[type]) {
+          // Merge default (registered) options and extra options into new options object
+          options = _objectSpread2(_objectSpread2({}, options), overrideSchemaOptions[type]);
+        }
+
+        return this.serializeResource(type, data, options, included, extraData, overrideSchemaOptions);
       }
       /**
        * Serialize 'attributes' key of resource objects: an attributes object representing some of the resource's data.
        *
        * @see {@link http://jsonapi.org/format/#document-resource-object-attributes}
-       * @method JSONAPISerializer#serializeAttributes
+       * @function JSONAPISerializer#serializeAttributes
        * @private
-       * @param {Object|Object[]} data input data.
-       * @param {Object} options resource's configuration options.
-       * @return {Object} serialized attributes.
+       * @param {object|object[]} data input data.
+       * @param {object} options resource's configuration options.
+       * @returns {object} serialized attributes.
        */
 
     }, {
@@ -2109,13 +2426,14 @@ define(function () { 'use strict';
        * Serialize 'relationships' key of resource objects: a relationships object describing relationships between the resource and other JSON API resources.
        *
        * @see {@link http://jsonapi.org/format/#document-resource-object-relationships}
-       * @method JSONAPISerializer#serializeRelationships
+       * @function JSONAPISerializer#serializeRelationships
        * @private
-       * @param {Object|Object[]} data input data.
-       * @param {Object} options resource's configuration options.
-       * @param {Map<string:Object>} included.
-       * @param {Object} extraData additional data.
-       * @return {Object} serialized relationships.
+       * @param {object|object[]} data input data.
+       * @param {object} options resource's configuration options.
+       * @param {Map<string, object>} [included]  Included resources.
+       * @param {object} [extraData] additional data.
+       * @param {object} [overrideSchemaOptions=] additional schema options, a map of types with options to override
+       * @returns {object} serialized relationships.
        */
 
     }, {
@@ -2123,6 +2441,7 @@ define(function () { 'use strict';
       value: function serializeRelationships(data, options, included, extraData) {
         var _this6 = this;
 
+        var overrideSchemaOptions = arguments.length > 4 && arguments[4] !== undefined ? arguments[4] : {};
         var serializedRelationships = {};
         Object.keys(options.relationships).forEach(function (relationship) {
           var relationshipOptions = options.relationships[relationship]; // Support alternativeKey options for relationships
@@ -2136,18 +2455,14 @@ define(function () { 'use strict';
           var serializeRelationship = {
             links: _this6.processOptionsValues(data, extraData, relationshipOptions.links),
             meta: _this6.processOptionsValues(data, extraData, relationshipOptions.meta),
-            data: _this6.serializeRelationship(relationshipOptions.type, relationshipOptions.schema, get$1(data, relationshipKey), included, data, extraData)
-          }; // Avoid empty relationship object
+            data: _this6.serializeRelationship(relationshipOptions.type, relationshipOptions.schema, get$1(data, relationshipKey), included, data, extraData, overrideSchemaOptions)
+          };
 
-          if (serializeRelationship.data === undefined && serializeRelationship.links === undefined && serializeRelationship.meta === undefined) {
-            serializeRelationship = {
-              data: null
-            };
-          } // Convert case
-
-
-          relationship = options.convertCase ? _this6._convertCase(relationship, options.convertCase) : relationship;
-          serializedRelationships[relationship] = serializeRelationship;
+          if (serializeRelationship.data !== undefined || serializeRelationship.links !== undefined || serializeRelationship.meta !== undefined) {
+            // Convert case
+            relationship = options.convertCase ? _this6._convertCase(relationship, options.convertCase) : relationship;
+            serializedRelationships[relationship] = serializeRelationship;
+          }
         });
         return Object.keys(serializedRelationships).length ? serializedRelationships : undefined;
       }
@@ -2155,15 +2470,16 @@ define(function () { 'use strict';
        * Serialize 'data' key of relationship's resource objects.
        *
        * @see {@link http://jsonapi.org/format/#document-resource-object-linkage}
-       * @method JSONAPISerializer#serializeRelationship
+       * @function JSONAPISerializer#serializeRelationship
        * @private
        * @param {string|Function} rType the relationship's type.
        * @param {string} rSchema the relationship's schema
-       * @param {Object|Object[]} rData relationship's data.
-       * @param {Map<string:Object>} included.
-       * @param {Object} the entire resource's data.
-       * @param {Object} extraData additional data.
-       * @return {Object|Object[]} serialized relationship data.
+       * @param {object|object[]} rData relationship's data.
+       * @param {Map<string, object>} [included] Included resources.
+       * @param {object} [data] the entire resource's data.
+       * @param {object} [extraData] additional data.
+       * @param {object} [overrideSchemaOptions=] additional schema options, a map of types with options to override
+       * @returns {object|object[]} serialized relationship data.
        */
 
     }, {
@@ -2171,6 +2487,7 @@ define(function () { 'use strict';
       value: function serializeRelationship(rType, rSchema, rData, included, data, extraData) {
         var _this7 = this;
 
+        var overrideSchemaOptions = arguments.length > 6 && arguments[6] !== undefined ? arguments[6] : {};
         included = included || new Map();
         var schema = rSchema || 'default'; // No relationship data
 
@@ -2185,7 +2502,7 @@ define(function () { 'use strict';
 
         if (Array.isArray(rData)) {
           return rData.map(function (d) {
-            return _this7.serializeRelationship(rType, schema, d, included, data, extraData);
+            return _this7.serializeRelationship(rType, schema, d, included, data, extraData, overrideSchemaOptions);
           });
         } // Resolve relationship type
 
@@ -2205,16 +2522,36 @@ define(function () { 'use strict';
         }
 
         var rOptions = this.schemas[type][schema];
+
+        if (overrideSchemaOptions[type]) {
+          // Merge default (registered) options and extra options into new options object
+          rOptions = _objectSpread2(_objectSpread2({}, rOptions), overrideSchemaOptions[type]);
+        }
+
         var serializedRelationship = {
           type: type
         }; // Support for unpopulated relationships (an id, or array of ids)
 
-        if (!isPlainObject$1(rData)) {
+        if (!isObjectLike$2(rData)) {
           serializedRelationship.id = rData.toString();
         } else {
-          // Relationship has been populated
-          serializedRelationship.id = rData[rOptions.id].toString();
-          included.set("".concat(type, "-").concat(serializedRelationship.id), this.serializeResource(type, rData, rOptions, included, extraData));
+          var serializedIncluded = this.serializeResource(type, rData, rOptions, included, extraData, overrideSchemaOptions);
+          serializedRelationship.id = serializedIncluded.id;
+          var identifier = "".concat(type, "-").concat(serializedRelationship.id); // Not include relationship object which only contains an id
+
+          if (serializedIncluded.attributes && Object.keys(serializedIncluded.attributes).length) {
+            // Merge relationships data if already included
+            if (included.has(identifier)) {
+              var alreadyIncluded = included.get(identifier);
+
+              if (serializedIncluded.relationships) {
+                alreadyIncluded.relationships = _objectSpread2(_objectSpread2({}, alreadyIncluded.relationships), serializedIncluded.relationships);
+                included.set(identifier, alreadyIncluded);
+              }
+            } else {
+              included.set(identifier, serializedIncluded);
+            }
+          }
         }
 
         return serializedRelationship;
@@ -2223,14 +2560,14 @@ define(function () { 'use strict';
        * Process options values.
        * Allows options to be an object or a function with 1 or 2 arguments
        *
-       * @method JSONAPISerializer#processOptionsValues
+       * @function JSONAPISerializer#processOptionsValues
        * @private
-       * @param {Object} data data passed to functions options
-       * @param {Object} extraData additional data passed to functions options
-       * @param {Object} options configuration options.
-       * @param {string} fallbackModeIfOneArg fallback mode if only one argument is passed to function.
+       * @param {object} data data passed to functions options.
+       * @param {object} extraData additional data passed to functions options.
+       * @param {object} options configuration options.
+       * @param {string} [fallbackModeIfOneArg] fallback mode if only one argument is passed to function.
        * Avoid breaking changes with issue https://github.com/danivek/json-api-serializer/issues/27.
-       * @return {Object}
+       * @returns {object} processed options.
        */
 
     }, {
@@ -2261,11 +2598,11 @@ define(function () { 'use strict';
       /**
        * Recursively convert object keys case
        *
-       * @method JSONAPISerializer#_convertCase
+       * @function JSONAPISerializer#_convertCase
        * @private
-       * @param {Object|Object[]|string} data to convert
+       * @param {object|object[]|string} data to convert
        * @param {string} convertCaseOptions can be snake_case', 'kebab-case' or 'camelCase' format.
-       * @return {Object}
+       * @returns {object} Object with it's keys converted as per the convertCaseOptions
        */
 
     }, {
@@ -2273,38 +2610,71 @@ define(function () { 'use strict';
       value: function _convertCase(data, convertCaseOptions) {
         var _this8 = this;
 
-        var converted;
-
-        if (_typeof(data) === 'object') {
-          converted = transform$1(data, function (result, value, key) {
-            if (_typeof(value) === 'object') {
-              result[_this8._convertCase(key, convertCaseOptions)] = _this8._convertCase(value, convertCaseOptions);
-            } else {
-              result[_this8._convertCase(key, convertCaseOptions)] = value;
+        if (Array.isArray(data)) {
+          return data.map(function (item) {
+            if (item && (Array.isArray(item) || isPlainObject$1(item))) {
+              return _this8._convertCase(item, convertCaseOptions);
             }
 
+            return item;
+          });
+        }
+
+        if (isPlainObject$1(data)) {
+          return transform$1(data, function (result, value, key) {
+            var converted;
+
+            if (value && (Array.isArray(value) || isPlainObject$1(value))) {
+              converted = _this8._convertCase(value, convertCaseOptions);
+            } else {
+              converted = value;
+            }
+
+            result[_this8._convertCase(key, convertCaseOptions)] = converted;
             return result;
           }, {});
-        } else {
+        }
+
+        if (typeof data === 'string') {
+          var converted;
+
           switch (convertCaseOptions) {
             case 'snake_case':
-              converted = toSnakeCase$1(data);
+              converted = this.convertCaseMap.snakeCase.get(data);
+
+              if (!converted) {
+                converted = toSnakeCase$1(data);
+                this.convertCaseMap.snakeCase.set(data, converted);
+              }
+
               break;
 
             case 'kebab-case':
-              converted = toKebabCase$1(data);
+              converted = this.convertCaseMap.kebabCase.get(data);
+
+              if (!converted) {
+                converted = toKebabCase$1(data);
+                this.convertCaseMap.kebabCase.set(data, converted);
+              }
+
               break;
 
             case 'camelCase':
-              converted = toCamelCase$1(data);
+              converted = this.convertCaseMap.camelCase.get(data);
+
+              if (!converted) {
+                converted = toCamelCase$1(data);
+                this.convertCaseMap.camelCase.set(data, converted);
+              }
+
               break;
 
-            default: // Do nothing
-
           }
+
+          return converted;
         }
 
-        return converted;
+        return data;
       }
     }]);
 

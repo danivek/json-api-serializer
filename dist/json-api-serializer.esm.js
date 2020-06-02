@@ -1177,52 +1177,178 @@ function set(object, path, value) {
 
 var lodash_set = set;
 
+/* eslint-disable */
+
+// Influenced by http://jsfiddle.net/2baax9nk/5/
+
+class Node {
+  constructor(key, data) {
+    this.key = key;
+    this.data = data;
+    this.previous = null;
+    this.next = null;
+  }
+}
+
+var lruCache = class LRU {
+  constructor(capacity) {
+    this.capacity = capacity === 0 ? Infinity : capacity;
+    this.map = {};
+    this.head = null;
+    this.tail = null;
+  }
+
+  get(key) {
+    // Existing item
+    if (this.map[key] !== undefined) {
+      // Move to the first place
+      const node = this.map[key];
+      this._moveFirst(node);
+
+      // Return
+      return node.data;
+    }
+
+    // Not found
+    return undefined;
+  }
+
+  set(key, value) {
+    // Existing item
+    if (this.map[key] !== undefined) {
+      // Move to the first place
+      const node = this.map[key];
+      node.data = value;
+      this._moveFirst(node);
+      return;
+    }
+
+    // Ensuring the cache is within capacity
+    if (Object.keys(this.map).length >= this.capacity) {
+      const id = this.tail.key;
+      this._removeLast();
+      delete this.map[id];
+    }
+
+    // New Item
+    const node = new Node(key, value);
+    this._add(node);
+    this.map[key] = node;
+  }
+
+  _add(node) {
+    node.next = null;
+    node.previous = node.next;
+
+    // first item
+    if (this.head === null) {
+      this.head = node;
+      this.tail = node;
+    } else {
+      // adding to existing items
+      this.head.previous = node;
+      node.next = this.head;
+      this.head = node;
+    }
+  }
+
+  _remove(node) {
+    // only item in the cache
+    if (this.head === node && this.tail === node) {
+      this.tail = null;
+      this.head = this.tail;
+      return;
+    }
+
+    // remove from head
+    if (this.head === node) {
+      this.head.next.previous = null;
+      this.head = this.head.next;
+      return;
+    }
+
+    // remove from tail
+    if (this.tail === node) {
+      this.tail.previous.next = null;
+      this.tail = this.tail.previous;
+      return;
+    }
+
+    // remove from middle
+    node.previous.next = node.next;
+    node.next.previous = node.previous;
+  }
+
+  _moveFirst(node) {
+    this._remove(node);
+    this._add(node);
+  }
+
+  _removeLast() {
+    this._remove(this.tail);
+  }
+};
+
 /* eslint-disable no-sequences */
 /* eslint-disable no-return-assign */
 
 
 
+
 // https://github.com/you-dont-need/You-Dont-Need-Lodash-Underscore#_get
-const get = (obj, path, defaultValue) =>
-  String.prototype.split
+const get = (obj, path, defaultValue) => {
+  const result = String.prototype.split
     .call(path, /[,[\].]+?/)
     .filter(Boolean)
-    .reduce((a, c) => (Object.hasOwnProperty.call(a, c) ? a[c] : defaultValue), obj);
+    .reduce((res, key) => (res !== null && res !== undefined ? res[key] : res), obj);
+  return result === undefined || result === obj ? defaultValue : result;
+};
 
+// https://github.com/30-seconds/30-seconds-of-code/blob/master/snippets/pick.md
 const pick = (obj, arr) =>
   arr.reduce((acc, curr) => (curr in obj && (acc[curr] = obj[curr]), acc), {});
 
-const isEmpty = val => val == null || !(Object.keys(val) || val).length;
+// https://github.com/30-seconds/30-seconds-of-code/blob/master/snippets/isEmpty.md
+const isEmpty = (val) => val == null || !(Object.keys(val) || val).length;
 
+// https://github.com/30-seconds/30-seconds-of-code/blob/master/snippets/omit.md
 const omit = (obj, arr) =>
   Object.keys(obj)
-    .filter(k => !arr.includes(k))
+    .filter((k) => !arr.includes(k))
     .reduce((acc, key) => ((acc[key] = obj[key]), acc), {});
 
-const isPlainObject = val => !!val && typeof val === 'object' && val.constructor === Object;
+// https://github.com/30-seconds/30-seconds-of-code/blob/master/snippets/isObjectLike.md
+const isObjectLike$1 = (val) => val !== null && typeof val === 'object';
 
+// https://github.com/30-seconds/30-seconds-of-code/blob/master/snippets/isPlainObject.md
+const isPlainObject = (val) => !!val && typeof val === 'object' && val.constructor === Object;
+
+// https://github.com/30-seconds/30-seconds-of-code/blob/master/snippets/transform.md
 const transform = (obj, fn, acc) => Object.keys(obj).reduce((a, k) => fn(a, obj[k], k, obj), acc);
 
-const toKebabCase = str =>
+// https://github.com/30-seconds/30-seconds-of-code/blob/master/snippets/toKebabCase.md
+const toKebabCase = (str) =>
   str &&
   str
     .match(/[A-Z]{2,}(?=[A-Z][a-z]+[0-9]*|\b)|[A-Z]?[a-z]+[0-9]*|[A-Z]|[0-9]+/g)
-    .map(x => x.toLowerCase())
+    .map((x) => x.toLowerCase())
     .join('-');
 
-const toSnakeCase = str =>
+// https://github.com/30-seconds/30-seconds-of-code/blob/master/snippets/toSnakeCase.md
+const toSnakeCase = (str) =>
   str &&
   str
     .match(/[A-Z]{2,}(?=[A-Z][a-z]+[0-9]*|\b)|[A-Z]?[a-z]+[0-9]*|[A-Z]|[0-9]+/g)
-    .map(x => x.toLowerCase())
+    .map((x) => x.toLowerCase())
     .join('_');
 
-const toCamelCase = str => {
+// https://github.com/30-seconds/30-seconds-of-code/blob/master/snippets/toCamelCase.md
+const toCamelCase = (str) => {
   const s =
     str &&
     str
       .match(/[A-Z]{2,}(?=[A-Z][a-z]+[0-9]*|\b)|[A-Z]?[a-z]+[0-9]*|[A-Z]|[0-9]+/g)
-      .map(x => x.slice(0, 1).toUpperCase() + x.slice(1).toLowerCase())
+      .map((x) => x.slice(0, 1).toUpperCase() + x.slice(1).toLowerCase())
       .join('');
   return s.slice(0, 1).toLowerCase() + s.slice(1);
 };
@@ -1234,37 +1360,37 @@ var helpers = {
   isEmpty,
   omit,
   isPlainObject,
+  isObjectLike: isObjectLike$1,
   transform,
   toKebabCase,
   toSnakeCase,
-  toCamelCase
+  toCamelCase,
+  LRU: lruCache,
 };
 
 /**
  * Validate and apply default values to resource's configuration options.
  *
- * @method validateOptions
+ * @function validateOptions
  * @private
- * @param {Object} options Configuration options.
- * @return {Object}
+ * @param {object} options Configuration options.
+ * @returns {object} valid configuration options.
  */
 function validateOptions(options) {
-  options = Object.assign(
-    {
-      id: 'id',
-      blacklist: [],
-      whitelist: [],
-      links: {},
-      relationships: {},
-      topLevelLinks: {},
-      topLevelMeta: {},
-      meta: {},
-      blacklistOnDeserialize: [],
-      whitelistOnDeserialize: [],
-      jsonapiObject: true
-    },
-    options
-  );
+  options = {
+    id: 'id',
+    blacklist: [],
+    whitelist: [],
+    links: {},
+    relationships: {},
+    topLevelLinks: {},
+    topLevelMeta: {},
+    meta: {},
+    blacklistOnDeserialize: [],
+    whitelistOnDeserialize: [],
+    jsonapiObject: true,
+    ...options,
+  };
 
   if (!Array.isArray(options.blacklist)) throw new Error("option 'blacklist' must be an array");
   if (!Array.isArray(options.whitelist)) throw new Error("option 'whitelist' must be an array");
@@ -1304,12 +1430,20 @@ function validateOptions(options) {
       "option 'unconvertCase' must be one of 'kebab-case', 'snake_case', 'camelCase'"
     );
 
+  if (options.beforeSerialize && typeof options.beforeSerialize !== 'function')
+    throw new Error("option 'beforeSerialize' must be function");
+
+  if (options.afterDeserialize && typeof options.afterDeserialize !== 'function')
+    throw new Error("option 'afterDeserialize' must be function");
+
   const { relationships } = options;
-  Object.keys(relationships).forEach(key => {
-    relationships[key] = Object.assign(
-      { schema: 'default', links: {}, meta: {} },
-      relationships[key]
-    );
+  Object.keys(relationships).forEach((key) => {
+    relationships[key] = {
+      schema: 'default',
+      links: {},
+      meta: {},
+      ...relationships[key],
+    };
 
     if (!relationships[key].type)
       throw new Error(`option 'type' for relationship '${key}' is required`);
@@ -1346,13 +1480,13 @@ function validateOptions(options) {
 /**
  * Validate and apply default values to the dynamic type object option.
  *
- * @method validateDynamicTypeOptions
+ * @function validateDynamicTypeOptions
  * @private
- * @param {Object} options dynamic type object option.
- * @return {Object}
+ * @param {object} options dynamic type object option.
+ * @returns {object} valid dynamic type options.
  */
 function validateDynamicTypeOptions(options) {
-  options = Object.assign({ topLevelLinks: {}, topLevelMeta: {}, jsonapiObject: true }, options);
+  options = { topLevelLinks: {}, topLevelMeta: {}, jsonapiObject: true, ...options };
 
   if (!options.type) throw new Error("option 'type' is required");
   if (typeof options.type !== 'string' && typeof options.type !== 'function') {
@@ -1382,10 +1516,10 @@ function validateDynamicTypeOptions(options) {
 /**
  * Validate a JSONAPI error object
  *
- * @method validateError
+ * @function validateError
  * @private
- * @param {Object} err a JSONAPI error object
- * @return {Object}
+ * @param {object} err a JSONAPI error object
+ * @returns {object} JSONAPI  valid error object
  */
 function validateError(err) {
   if (typeof err !== 'object') {
@@ -1399,7 +1533,7 @@ function validateError(err) {
       throw new Error("error 'link' property must be an object");
     }
 
-    Object.keys(linksObj).forEach(key => {
+    Object.keys(linksObj).forEach((key) => {
       if (typeof linksObj[key] !== 'object' && typeof linksObj[key] !== 'string') {
         throw new Error(`error 'links.${key}' must be a string or an object`);
       }
@@ -1450,7 +1584,7 @@ function validateError(err) {
 var validator = {
   validateOptions,
   validateDynamicTypeOptions,
-  validateError
+  validateError,
 };
 
 const {
@@ -1458,12 +1592,14 @@ const {
   isEmpty: isEmpty$1,
   omit: omit$1,
   isPlainObject: isPlainObject$1,
+  isObjectLike: isObjectLike$2,
   transform: transform$1,
   get: get$1,
   set: set$1,
   toCamelCase: toCamelCase$1,
   toKebabCase: toKebabCase$1,
-  toSnakeCase: toSnakeCase$1
+  toSnakeCase: toSnakeCase$1,
+  LRU,
 } = helpers;
 
 const { validateOptions: validateOptions$1, validateDynamicTypeOptions: validateDynamicTypeOptions$1, validateError: validateError$1 } = validator;
@@ -1478,21 +1614,30 @@ const { validateOptions: validateOptions$1, validateDynamicTypeOptions: validate
  * const serializer = new JSONAPISerializer();
  *
  * @class JSONAPISerializer
- * @param {Object} [opts] Global options.
+ * @param {object} [opts] Global options.
  */
 var JSONAPISerializer_1 = class JSONAPISerializer {
   constructor(opts) {
     this.opts = opts || {};
     this.schemas = {};
+
+    // Size of cache used for convertCase, 0 results in an infinitely sized cache
+    const { convertCaseCacheSize = 5000 } = this.opts;
+    // Cache of strings to convert to their converted values per conversion type
+    this.convertCaseMap = {
+      camelCase: new LRU(convertCaseCacheSize),
+      kebabCase: new LRU(convertCaseCacheSize),
+      snakeCase: new LRU(convertCaseCacheSize),
+    };
   }
 
   /**
    * Register a resource with its type, schema name, and configuration options.
    *
-   * @method JSONAPISerializer#register
+   * @function JSONAPISerializer#register
    * @param {string} type resource's type.
-   * @param {string} [schema=default] schema name.
-   * @param {Object} [options] options.
+   * @param {string|object} [schema='default'] schema name.
+   * @param {object} [options] options.
    */
   register(type, schema, options) {
     if (typeof schema === 'object') {
@@ -1501,7 +1646,7 @@ var JSONAPISerializer_1 = class JSONAPISerializer {
     }
 
     schema = schema || 'default';
-    options = Object.assign({}, this.opts, options);
+    options = { ...this.opts, ...options };
 
     this.schemas[type] = this.schemas[type] || {};
     this.schemas[type][schema] = validateOptions$1(options);
@@ -1512,14 +1657,16 @@ var JSONAPISerializer_1 = class JSONAPISerializer {
    * Input data can be a simple object or an array of objects.
    *
    * @see {@link http://jsonapi.org/format/#document-top-level}
-   * @method JSONAPISerializer#serialize
-   * @param {string|Object} type resource's type as string or a dynamic type options as object.
-   * @param {Object|Object[]} data input data.
-   * @param {string} [schema=default] resource's schema name.
-   * @param {Object} [extraData] additional data that can be used in topLevelMeta options.
-   * @return {Object} serialized data.
+   * @function JSONAPISerializer#serialize
+   * @param {string|object} type resource's type as string or a dynamic type options as object.
+   * @param {object|object[]} data input data.
+   * @param {string|object} [schema='default'] resource's schema name.
+   * @param {object} [extraData] additional data that can be used in topLevelMeta options.
+   * @param {boolean} [excludeData] boolean that can be set to exclude the `data` property in serialized data.
+   * @param {object} [overrideSchemaOptions=] additional schema options, a map of types with options to override
+   * @returns {object} serialized data.
    */
-  serialize(type, data, schema, extraData) {
+  serialize(type, data, schema, extraData, excludeData, overrideSchemaOptions = {}) {
     // Support optional arguments (schema)
     if (arguments.length === 3) {
       if (typeof schema === 'object') {
@@ -1551,14 +1698,41 @@ var JSONAPISerializer_1 = class JSONAPISerializer {
       options = this.schemas[type][schema];
     }
 
+    const overrideType = isDynamicType ? type.type : type;
+    if (overrideSchemaOptions[overrideType]) {
+      // Merge default (registered) options and extra options into new options object
+      options = { ...options, ...overrideSchemaOptions[overrideType] };
+    }
+
+    let dataProperty;
+
+    if (excludeData) {
+      dataProperty = undefined;
+    } else if (isDynamicType) {
+      dataProperty = this.serializeMixedResource(
+        options,
+        data,
+        included,
+        extraData,
+        overrideSchemaOptions
+      );
+    } else {
+      dataProperty = this.serializeResource(
+        type,
+        data,
+        options,
+        included,
+        extraData,
+        overrideSchemaOptions
+      );
+    }
+
     return {
       jsonapi: options.jsonapiObject ? { version: '1.0' } : undefined,
       meta: this.processOptionsValues(data, extraData, options.topLevelMeta, 'extraData'),
       links: this.processOptionsValues(data, extraData, options.topLevelLinks, 'extraData'),
-      data: isDynamicType
-        ? this.serializeMixedResource(options, data, included, extraData)
-        : this.serializeResource(type, data, options, included, extraData),
-      included: included.size ? [...included.values()] : undefined
+      data: dataProperty,
+      included: included.size ? [...included.values()] : undefined,
     };
   }
 
@@ -1567,14 +1741,16 @@ var JSONAPISerializer_1 = class JSONAPISerializer {
    * Input data can be a simple object or an array of objects.
    *
    * @see {@link http://jsonapi.org/format/#document-top-level}
-   * @method JSONAPISerializer#serializeAsync
-   * @param {string} type resource's type.
-   * @param {Object|Object[]} data input data.
-   * @param {string} [schema=default] resource's schema name.
-   * @param {Object} [extraData] additional data that can be used in topLevelMeta options.
-   * @return {Promise} resolves with serialized data.
+   * @function JSONAPISerializer#serializeAsync
+   * @param {string|object} type resource's type or an object with a dynamic type resolved from data..
+   * @param {object|object[]} data input data.
+   * @param {string} [schema='default'] resource's schema name.
+   * @param {object} [extraData] additional data that can be used in topLevelMeta options.
+   * @param {boolean} [excludeData] boolean that can be set to exclude the `data` property in serialized data.
+   * @param {object} [overrideSchemaOptions=] additional schema options, a map of types with options to override
+   * @returns {Promise} resolves with serialized data.
    */
-  serializeAsync(type, data, schema, extraData) {
+  serializeAsync(type, data, schema, extraData, excludeData, overrideSchemaOptions = {}) {
     // Support optional arguments (schema)
     if (arguments.length === 3) {
       if (typeof schema === 'object') {
@@ -1609,9 +1785,23 @@ var JSONAPISerializer_1 = class JSONAPISerializer {
       options = this.schemas[type][schema];
     }
 
+    const overrideType = isDynamicType ? type.type : type;
+    if (overrideSchemaOptions[overrideType]) {
+      // Merge default (registered) options and extra options into new options object
+      options = { ...options, ...overrideSchemaOptions[overrideType] };
+    }
+
     return new Promise((resolve, reject) => {
+      /**
+       * Non-blocking serialization using the immediate queue.
+       *
+       * @see {@link https://nodejs.org/en/docs/guides/event-loop-timers-and-nexttick/}
+       */
       function next() {
         setImmediate(() => {
+          if (excludeData) {
+            return resolve();
+          }
           if (i >= arrayData.length) {
             return resolve(serializedData);
           }
@@ -1619,8 +1809,21 @@ var JSONAPISerializer_1 = class JSONAPISerializer {
           try {
             // Serialize a single item of the data-array.
             const serializedItem = isDynamicType
-              ? that.serializeMixedResource(type, arrayData[i], included, extraData)
-              : that.serializeResource(type, arrayData[i], options, included, extraData);
+              ? that.serializeMixedResource(
+                  type,
+                  arrayData[i],
+                  included,
+                  extraData,
+                  overrideSchemaOptions
+                )
+              : that.serializeResource(
+                  type,
+                  arrayData[i],
+                  options,
+                  included,
+                  extraData,
+                  overrideSchemaOptions
+                );
 
             if (serializedItem !== null) {
               serializedData.push(serializedItem);
@@ -1636,26 +1839,38 @@ var JSONAPISerializer_1 = class JSONAPISerializer {
       }
 
       next();
-    }).then(result => ({
-      jsonapi: options.jsonapiObject ? { version: '1.0' } : undefined,
-      meta: this.processOptionsValues(data, extraData, options.topLevelMeta, 'extraData'),
-      links: this.processOptionsValues(data, extraData, options.topLevelLinks, 'extraData'),
-      // If the source data was an array, we just pass the serialized data array.
-      // Otherwise we try to take the first (and only) item of it or pass null.
-      data: isDataArray ? result : result[0] || null,
-      included: included.size ? [...included.values()] : undefined
-    }));
+    }).then((result) => {
+      let dataProperty;
+
+      if (typeof result === 'undefined') {
+        dataProperty = undefined;
+      } else if (isDataArray) {
+        dataProperty = result;
+      } else {
+        dataProperty = result[0] || null;
+      }
+
+      return {
+        jsonapi: options.jsonapiObject ? { version: '1.0' } : undefined,
+        meta: this.processOptionsValues(data, extraData, options.topLevelMeta, 'extraData'),
+        links: this.processOptionsValues(data, extraData, options.topLevelLinks, 'extraData'),
+        // If the source data was an array, we just pass the serialized data array.
+        // Otherwise we try to take the first (and only) item of it or pass null.
+        data: dataProperty,
+        included: included.size ? [...included.values()] : undefined,
+      };
+    });
   }
 
   /**
    * Deserialize JSON API document data.
    * Input data can be a simple object or an array of objects.
    *
-   * @method JSONAPISerializer#deserialize
-   * @param {string|Object} type resource's type as string or an object with a dynamic type resolved from data.
-   * @param {Object} data JSON API input data.
-   * @param {string} [schema=default] resource's schema name.
-   * @return {Object} deserialized data.
+   * @function JSONAPISerializer#deserialize
+   * @param {string|object} type resource's type as string or an object with a dynamic type resolved from data.
+   * @param {object} data JSON API input data.
+   * @param {string} [schema='default'] resource's schema name.
+   * @returns {object} deserialized data.
    */
   deserialize(type, data, schema) {
     schema = schema || 'default';
@@ -1676,7 +1891,9 @@ var JSONAPISerializer_1 = class JSONAPISerializer {
 
     if (data.data) {
       deserializedData = Array.isArray(data.data)
-        ? data.data.map(resource => this.deserializeResource(type, resource, schema, data.included))
+        ? data.data.map((resource) =>
+            this.deserializeResource(type, resource, schema, data.included)
+          )
         : this.deserializeResource(type, data.data, schema, data.included);
     }
 
@@ -1687,11 +1904,11 @@ var JSONAPISerializer_1 = class JSONAPISerializer {
    * Asynchronously Deserialize JSON API document data.
    * Input data can be a simple object or an array of objects.
    *
-   * @method JSONAPISerializer#deserializeAsync
-   * @param {string|Object} type resource's type as string or an object with a dynamic type resolved from data.
-   * @param {Object} data JSON API input data.
-   * @param {string} [schema=default] resource's schema name.
-   * @return {Promise} resolves with serialized data.
+   * @function JSONAPISerializer#deserializeAsync
+   * @param {string|object} type resource's type as string or an object with a dynamic type resolved from data.
+   * @param {object} data JSON API input data.
+   * @param {string} [schema='default'] resource's schema name.
+   * @returns {Promise} resolves with serialized data.
    */
   deserializeAsync(type, data, schema) {
     schema = schema || 'default';
@@ -1715,6 +1932,11 @@ var JSONAPISerializer_1 = class JSONAPISerializer {
     const that = this;
 
     return new Promise((resolve, reject) => {
+      /**
+       * Non-blocking deserialization using the immediate queue.
+       *
+       * @see {@link https://nodejs.org/en/docs/guides/event-loop-timers-and-nexttick/}
+       */
       function next() {
         setImmediate(() => {
           if (i >= arrayData.length) {
@@ -1752,11 +1974,24 @@ var JSONAPISerializer_1 = class JSONAPISerializer {
    *  - A JSON API error object or an array of JSON API error object.
    *
    * @see {@link http://jsonapi.org/format/#errors}
-   * @method JSONAPISerializer#serializeError
-   * @param {Error|Error[]|Object|Object[]} error an Error, an array of Error, a JSON API error object, an array of JSON API error object
-   * @return {Promise} resolves with serialized error.
+   * @function JSONAPISerializer#serializeError
+   * @param {Error|Error[]|object|object[]} error an Error, an array of Error, a JSON API error object, an array of JSON API error object.
+   * @returns {Promise} resolves with serialized error.
    */
   serializeError(error) {
+    /**
+     * An Error object enhanced with status or/and custom code properties.
+     *
+     * @typedef {Error} ErrorWithStatus
+     * @property {string} [status] status code error
+     * @property {string} [code] code error
+     */
+
+    /**
+     * @private
+     * @param {Error|ErrorWithStatus|object} err an Error, a JSON API error object or an ErrorWithStatus.
+     * @returns {object} valid JSON API error.
+     */
     function convertToError(err) {
       let serializedError;
 
@@ -1766,7 +2001,8 @@ var JSONAPISerializer_1 = class JSONAPISerializer {
         serializedError = {
           status: status && status.toString(),
           code: err.code,
-          detail: err.message
+          title: err.title || err.constructor.name,
+          detail: err.message,
         };
       } else {
         serializedError = validateError$1(err);
@@ -1776,7 +2012,9 @@ var JSONAPISerializer_1 = class JSONAPISerializer {
     }
 
     return {
-      errors: Array.isArray(error) ? error.map(err => convertToError(err)) : [convertToError(error)]
+      errors: Array.isArray(error)
+        ? error.map((err) => convertToError(err))
+        : [convertToError(error)],
     };
   }
 
@@ -1784,26 +2022,25 @@ var JSONAPISerializer_1 = class JSONAPISerializer {
    * Deserialize a single JSON API resource.
    * Input data must be a simple object.
    *
-   * @method JSONAPISerializer#deserializeResource
-   * @param {string|Object} type resource's type as string or an object with a dynamic type resolved from data.
-   * @param {Object} data JSON API resource data.
-   * @param {string} [schema=default] resource's schema name.
-   * @param {Map<string:Object>} included.
-   * @return {Object} deserialized data.
+   * @function JSONAPISerializer#deserializeResource
+   * @param {string|object} type resource's type as string or an object with a dynamic type resolved from data.
+   * @param {object} data JSON API resource data.
+   * @param {string} [schema='default'] resource's schema name.
+   * @param {Map<string, object>} included Included resources.
+   * @param {string[]} lineage resource identifiers already deserialized to prevent circular references.
+   * @returns {object} deserialized data.
    */
-  deserializeResource(type, data, schema, included) {
+  deserializeResource(type, data, schema = 'default', included, lineage = []) {
     if (typeof type === 'object') {
       type = typeof type.type === 'function' ? type.type(data) : get$1(data, type.type);
+    }
 
-      if (!type) {
-        throw new Error(`No type can be resolved from data: ${JSON.stringify(data)}`);
-      }
+    if (!type) {
+      throw new Error(`No type can be resolved from data: ${JSON.stringify(data)}`);
+    }
 
-      if (!this.schemas[type]) {
-        throw new Error(`No type registered for ${type}`);
-      }
-
-      schema = 'default';
+    if (!this.schemas[type]) {
+      throw new Error(`No type registered for ${type}`);
     }
 
     const options = this.schemas[type][schema];
@@ -1823,63 +2060,70 @@ var JSONAPISerializer_1 = class JSONAPISerializer {
 
     // Deserialize relationships
     if (data.relationships) {
-      Object.keys(data.relationships).forEach(relationshipProperty => {
+      Object.keys(data.relationships).forEach((relationshipProperty) => {
         const relationship = data.relationships[relationshipProperty];
 
-        let relationshipKey = options.unconvertCase
+        const relationshipKey = options.unconvertCase
           ? this._convertCase(relationshipProperty, options.unconvertCase)
           : relationshipProperty;
 
-        // Support alternativeKey options for relationships
-        if (
-          options.relationships[relationshipKey] &&
-          options.relationships[relationshipKey].alternativeKey
-        ) {
-          relationshipKey = options.relationships[relationshipKey].alternativeKey;
-        }
+        const relationshipOptions = options.relationships[relationshipKey];
 
-        const deserializeFunction = relationshipData => {
-          if (
-            options.relationships[relationshipKey] &&
-            options.relationships[relationshipProperty].deserialize
-          ) {
-            return options.relationships[relationshipProperty].deserialize(relationshipData);
+        const deserializeFunction = (relationshipData) => {
+          if (relationshipOptions && relationshipOptions.deserialize) {
+            return relationshipOptions.deserialize(relationshipData);
           }
           return relationshipData.id;
         };
 
         if (relationship.data !== undefined) {
-          if (Array.isArray(relationship.data)) {
-            set$1(
-              deserializedData,
-              relationshipKey,
-              relationship.data.map(d =>
-                included
-                  ? this.deserializeIncluded(
-                      d.type,
-                      d.id,
-                      options.relationships[relationshipProperty],
-                      included
-                    )
-                  : deserializeFunction(d)
-              )
-            );
-          } else if (relationship.data === null) {
+          if (relationship.data === null) {
             // null data
-            set$1(deserializedData, relationshipKey, null);
-          } else {
             set$1(
               deserializedData,
-              relationshipKey,
-              included
-                ? this.deserializeIncluded(
-                    relationship.data.type,
-                    relationship.data.id,
-                    options.relationships[relationshipProperty],
-                    included
-                  )
-                : deserializeFunction(relationship.data)
+              (relationshipOptions && relationshipOptions.alternativeKey) || relationshipKey,
+              null
             );
+          } else {
+            if ((relationshipOptions && relationshipOptions.alternativeKey) || !included) {
+              set$1(
+                deserializedData,
+                (relationshipOptions && relationshipOptions.alternativeKey) || relationshipKey,
+                Array.isArray(relationship.data)
+                  ? relationship.data.map((d) => deserializeFunction(d))
+                  : deserializeFunction(relationship.data)
+              );
+            }
+
+            if (included) {
+              const deserializeIncludedRelationship = (relationshipData) => {
+                const lineageCopy = [...lineage];
+                // Prevent circular relationships
+                const lineageKey = `${relationshipData.type}-${relationshipData.id}`;
+                const isCircular = lineageCopy.includes(lineageKey);
+
+                if (isCircular) {
+                  return deserializeFunction(relationshipData);
+                }
+
+                lineageCopy.push(lineageKey);
+                return this.deserializeIncluded(
+                  relationshipData.type,
+                  relationshipData.id,
+                  relationshipOptions,
+                  included,
+                  lineageCopy
+                );
+              };
+
+              set$1(
+                deserializedData,
+                relationshipKey,
+                Array.isArray(relationship.data)
+                  ? relationship.data.map((d) => deserializeIncludedRelationship(d))
+                  : deserializeIncludedRelationship(relationship.data)
+              );
+            }
           }
         }
       });
@@ -1897,51 +2141,74 @@ var JSONAPISerializer_1 = class JSONAPISerializer {
       deserializedData.meta = data.meta;
     }
 
+    if (options.afterDeserialize) {
+      return options.afterDeserialize(deserializedData);
+    }
+
     return deserializedData;
   }
 
-  deserializeIncluded(type, id, relationshipOpts, included) {
+  deserializeIncluded(type, id, relationshipOpts, included, lineage) {
     const includedResource = included.find(
-      resource => resource.type === type && resource.id === id
+      (resource) => resource.type === type && resource.id === id
     );
 
     if (!includedResource) {
       return id;
     }
 
-    return this.deserializeResource(type, includedResource, relationshipOpts.schema, included);
+    return this.deserializeResource(
+      type,
+      includedResource,
+      relationshipOpts.schema,
+      included,
+      lineage
+    );
   }
 
   /**
    * Serialize resource objects.
    *
    * @see {@link http://jsonapi.org/format/#document-resource-objects}
-   * @method JSONAPISerializer#serializeDocument
+   * @function JSONAPISerializer#serializeDocument
    * @private
    * @param {string} type resource's type.
-   * @param {Object|Object[]} data input data.
-   * @param {options} options resource's configuration options.
-   * @param {Map<string:Object>} included.
-   * @param {Object} extraData additional data.
-   * @return {Object|Object[]} serialized data.
+   * @param {object|object[]} data input data.
+   * @param {object} options resource's configuration options.
+   * @param {Map<string, object>} [included] Included resources.
+   * @param {object} [extraData] additional data.
+   * @param {object} [overrideSchemaOptions=] additional schema options, a map of types with options to override
+   * @returns {object|object[]} serialized data.
    */
-  serializeResource(type, data, options, included, extraData) {
+  serializeResource(type, data, options, included, extraData, overrideSchemaOptions = {}) {
     if (isEmpty$1(data)) {
       // Return [] or null
       return Array.isArray(data) ? data : null;
     }
 
     if (Array.isArray(data)) {
-      return data.map(d => this.serializeResource(type, d, options, included, extraData));
+      return data.map((d) =>
+        this.serializeResource(type, d, options, included, extraData, overrideSchemaOptions)
+      );
+    }
+
+    if (options.beforeSerialize) {
+      data = options.beforeSerialize(data);
     }
 
     return {
       type,
       id: data[options.id] ? data[options.id].toString() : undefined,
       attributes: this.serializeAttributes(data, options),
-      relationships: this.serializeRelationships(data, options, included, extraData),
+      relationships: this.serializeRelationships(
+        data,
+        options,
+        included,
+        extraData,
+        overrideSchemaOptions
+      ),
       meta: this.processOptionsValues(data, extraData, options.meta),
-      links: this.processOptionsValues(data, extraData, options.links)
+      links: this.processOptionsValues(data, extraData, options.links),
     };
   }
 
@@ -1949,22 +2216,25 @@ var JSONAPISerializer_1 = class JSONAPISerializer {
    * Serialize mixed resource object with a dynamic type resolved from data
    *
    * @see {@link http://jsonapi.org/format/#document-resource-objects}
-   * @method JSONAPISerializer#serializeMixedResource
+   * @function JSONAPISerializer#serializeMixedResource
    * @private
-   * @param {Object} typeOption a dynamic type options.
-   * @param {Object|Object[]} data input data.
-   * @param {Map<string:Object>} included.
-   * @param {Object} extraData additional data.
-   * @return {Object|Object[]} serialized data.
+   * @param {object} typeOption a dynamic type options.
+   * @param {object|object[]} data input data.
+   * @param {Map<string, object>} [included] Included resources.
+   * @param {object} [extraData] additional data.
+   * @param {object} [overrideSchemaOptions=] additional schema options, a map of types with options to override
+   * @returns {object|object[]} serialized data.
    */
-  serializeMixedResource(typeOption, data, included, extraData) {
+  serializeMixedResource(typeOption, data, included, extraData, overrideSchemaOptions = {}) {
     if (isEmpty$1(data)) {
       // Return [] or null
       return Array.isArray(data) ? data : null;
     }
 
     if (Array.isArray(data)) {
-      return data.map(d => this.serializeMixedResource(typeOption, d, included, extraData));
+      return data.map((d) =>
+        this.serializeMixedResource(typeOption, d, included, extraData, overrideSchemaOptions)
+      );
     }
 
     // Resolve type from data (can be a string or a function deriving a type-string from each data-item)
@@ -1979,18 +2249,24 @@ var JSONAPISerializer_1 = class JSONAPISerializer {
       throw new Error(`No type registered for ${type}`);
     }
 
-    return this.serializeResource(type, data, this.schemas[type].default, included, extraData);
+    let options = this.schemas[type].default;
+    if (overrideSchemaOptions[type]) {
+      // Merge default (registered) options and extra options into new options object
+      options = { ...options, ...overrideSchemaOptions[type] };
+    }
+
+    return this.serializeResource(type, data, options, included, extraData, overrideSchemaOptions);
   }
 
   /**
    * Serialize 'attributes' key of resource objects: an attributes object representing some of the resource's data.
    *
    * @see {@link http://jsonapi.org/format/#document-resource-object-attributes}
-   * @method JSONAPISerializer#serializeAttributes
+   * @function JSONAPISerializer#serializeAttributes
    * @private
-   * @param {Object|Object[]} data input data.
-   * @param {Object} options resource's configuration options.
-   * @return {Object} serialized attributes.
+   * @param {object|object[]} data input data.
+   * @param {object} options resource's configuration options.
+   * @returns {object} serialized attributes.
    */
   serializeAttributes(data, options) {
     if (options.whitelist && options.whitelist.length) {
@@ -1999,7 +2275,7 @@ var JSONAPISerializer_1 = class JSONAPISerializer {
 
     // Support alternativeKey options for relationships
     const alternativeKeys = [];
-    Object.keys(options.relationships).forEach(key => {
+    Object.keys(options.relationships).forEach((key) => {
       const rOptions = options.relationships[key];
       if (rOptions.alternativeKey) {
         alternativeKeys.push(rOptions.alternativeKey);
@@ -2011,7 +2287,7 @@ var JSONAPISerializer_1 = class JSONAPISerializer {
       options.id,
       ...Object.keys(options.relationships),
       ...alternativeKeys,
-      ...options.blacklist
+      ...options.blacklist,
     ]);
 
     if (options.convertCase) {
@@ -2025,18 +2301,19 @@ var JSONAPISerializer_1 = class JSONAPISerializer {
    * Serialize 'relationships' key of resource objects: a relationships object describing relationships between the resource and other JSON API resources.
    *
    * @see {@link http://jsonapi.org/format/#document-resource-object-relationships}
-   * @method JSONAPISerializer#serializeRelationships
+   * @function JSONAPISerializer#serializeRelationships
    * @private
-   * @param {Object|Object[]} data input data.
-   * @param {Object} options resource's configuration options.
-   * @param {Map<string:Object>} included.
-   * @param {Object} extraData additional data.
-   * @return {Object} serialized relationships.
+   * @param {object|object[]} data input data.
+   * @param {object} options resource's configuration options.
+   * @param {Map<string, object>} [included]  Included resources.
+   * @param {object} [extraData] additional data.
+   * @param {object} [overrideSchemaOptions=] additional schema options, a map of types with options to override
+   * @returns {object} serialized relationships.
    */
-  serializeRelationships(data, options, included, extraData) {
+  serializeRelationships(data, options, included, extraData, overrideSchemaOptions = {}) {
     const serializedRelationships = {};
 
-    Object.keys(options.relationships).forEach(relationship => {
+    Object.keys(options.relationships).forEach((relationship) => {
       const relationshipOptions = options.relationships[relationship];
 
       // Support alternativeKey options for relationships
@@ -2045,7 +2322,7 @@ var JSONAPISerializer_1 = class JSONAPISerializer {
         relationshipKey = relationshipOptions.alternativeKey;
       }
 
-      let serializeRelationship = {
+      const serializeRelationship = {
         links: this.processOptionsValues(data, extraData, relationshipOptions.links),
         meta: this.processOptionsValues(data, extraData, relationshipOptions.meta),
         data: this.serializeRelationship(
@@ -2054,27 +2331,23 @@ var JSONAPISerializer_1 = class JSONAPISerializer {
           get$1(data, relationshipKey),
           included,
           data,
-          extraData
-        )
+          extraData,
+          overrideSchemaOptions
+        ),
       };
 
-      // Avoid empty relationship object
       if (
-        serializeRelationship.data === undefined &&
-        serializeRelationship.links === undefined &&
-        serializeRelationship.meta === undefined
+        serializeRelationship.data !== undefined ||
+        serializeRelationship.links !== undefined ||
+        serializeRelationship.meta !== undefined
       ) {
-        serializeRelationship = {
-          data: null
-        };
+        // Convert case
+        relationship = options.convertCase
+          ? this._convertCase(relationship, options.convertCase)
+          : relationship;
+
+        serializedRelationships[relationship] = serializeRelationship;
       }
-
-      // Convert case
-      relationship = options.convertCase
-        ? this._convertCase(relationship, options.convertCase)
-        : relationship;
-
-      serializedRelationships[relationship] = serializeRelationship;
     });
 
     return Object.keys(serializedRelationships).length ? serializedRelationships : undefined;
@@ -2084,17 +2357,26 @@ var JSONAPISerializer_1 = class JSONAPISerializer {
    * Serialize 'data' key of relationship's resource objects.
    *
    * @see {@link http://jsonapi.org/format/#document-resource-object-linkage}
-   * @method JSONAPISerializer#serializeRelationship
+   * @function JSONAPISerializer#serializeRelationship
    * @private
    * @param {string|Function} rType the relationship's type.
    * @param {string} rSchema the relationship's schema
-   * @param {Object|Object[]} rData relationship's data.
-   * @param {Map<string:Object>} included.
-   * @param {Object} the entire resource's data.
-   * @param {Object} extraData additional data.
-   * @return {Object|Object[]} serialized relationship data.
+   * @param {object|object[]} rData relationship's data.
+   * @param {Map<string, object>} [included] Included resources.
+   * @param {object} [data] the entire resource's data.
+   * @param {object} [extraData] additional data.
+   * @param {object} [overrideSchemaOptions=] additional schema options, a map of types with options to override
+   * @returns {object|object[]} serialized relationship data.
    */
-  serializeRelationship(rType, rSchema, rData, included, data, extraData) {
+  serializeRelationship(
+    rType,
+    rSchema,
+    rData,
+    included,
+    data,
+    extraData,
+    overrideSchemaOptions = {}
+  ) {
     included = included || new Map();
     const schema = rSchema || 'default';
 
@@ -2109,8 +2391,16 @@ var JSONAPISerializer_1 = class JSONAPISerializer {
     }
 
     if (Array.isArray(rData)) {
-      return rData.map(d =>
-        this.serializeRelationship(rType, schema, d, included, data, extraData)
+      return rData.map((d) =>
+        this.serializeRelationship(
+          rType,
+          schema,
+          d,
+          included,
+          data,
+          extraData,
+          overrideSchemaOptions
+        )
       );
     }
 
@@ -2129,19 +2419,48 @@ var JSONAPISerializer_1 = class JSONAPISerializer {
       throw new Error(`No schema "${schema}" registered for type "${type}"`);
     }
 
-    const rOptions = this.schemas[type][schema];
+    let rOptions = this.schemas[type][schema];
+
+    if (overrideSchemaOptions[type]) {
+      // Merge default (registered) options and extra options into new options object
+      rOptions = { ...rOptions, ...overrideSchemaOptions[type] };
+    }
+
     const serializedRelationship = { type };
 
     // Support for unpopulated relationships (an id, or array of ids)
-    if (!isPlainObject$1(rData)) {
+    if (!isObjectLike$2(rData)) {
       serializedRelationship.id = rData.toString();
     } else {
-      // Relationship has been populated
-      serializedRelationship.id = rData[rOptions.id].toString();
-      included.set(
-        `${type}-${serializedRelationship.id}`,
-        this.serializeResource(type, rData, rOptions, included, extraData)
+      const serializedIncluded = this.serializeResource(
+        type,
+        rData,
+        rOptions,
+        included,
+        extraData,
+        overrideSchemaOptions
       );
+
+      serializedRelationship.id = serializedIncluded.id;
+      const identifier = `${type}-${serializedRelationship.id}`;
+
+      // Not include relationship object which only contains an id
+      if (serializedIncluded.attributes && Object.keys(serializedIncluded.attributes).length) {
+        // Merge relationships data if already included
+        if (included.has(identifier)) {
+          const alreadyIncluded = included.get(identifier);
+
+          if (serializedIncluded.relationships) {
+            alreadyIncluded.relationships = {
+              ...alreadyIncluded.relationships,
+              ...serializedIncluded.relationships,
+            };
+            included.set(identifier, alreadyIncluded);
+          }
+        } else {
+          included.set(identifier, serializedIncluded);
+        }
+      }
     }
     return serializedRelationship;
   }
@@ -2150,14 +2469,14 @@ var JSONAPISerializer_1 = class JSONAPISerializer {
    * Process options values.
    * Allows options to be an object or a function with 1 or 2 arguments
    *
-   * @method JSONAPISerializer#processOptionsValues
+   * @function JSONAPISerializer#processOptionsValues
    * @private
-   * @param {Object} data data passed to functions options
-   * @param {Object} extraData additional data passed to functions options
-   * @param {Object} options configuration options.
-   * @param {string} fallbackModeIfOneArg fallback mode if only one argument is passed to function.
+   * @param {object} data data passed to functions options.
+   * @param {object} extraData additional data passed to functions options.
+   * @param {object} options configuration options.
+   * @param {string} [fallbackModeIfOneArg] fallback mode if only one argument is passed to function.
    * Avoid breaking changes with issue https://github.com/danivek/json-api-serializer/issues/27.
-   * @return {Object}
+   * @returns {object} processed options.
    */
   processOptionsValues(data, extraData, options, fallbackModeIfOneArg) {
     let processedOptions = {};
@@ -2168,7 +2487,7 @@ var JSONAPISerializer_1 = class JSONAPISerializer {
           ? options(extraData)
           : options(data, extraData);
     } else {
-      Object.keys(options).forEach(key => {
+      Object.keys(options).forEach((key) => {
         let processedValue = {};
         if (options[key] && typeof options[key] === 'function') {
           // Backward compatible with functions with one 'extraData' argument
@@ -2189,46 +2508,71 @@ var JSONAPISerializer_1 = class JSONAPISerializer {
   /**
    * Recursively convert object keys case
    *
-   * @method JSONAPISerializer#_convertCase
+   * @function JSONAPISerializer#_convertCase
    * @private
-   * @param {Object|Object[]|string} data to convert
+   * @param {object|object[]|string} data to convert
    * @param {string} convertCaseOptions can be snake_case', 'kebab-case' or 'camelCase' format.
-   * @return {Object}
+   * @returns {object} Object with it's keys converted as per the convertCaseOptions
    */
   _convertCase(data, convertCaseOptions) {
-    let converted;
-    if (typeof data === 'object') {
-      converted = transform$1(
+    if (Array.isArray(data)) {
+      return data.map((item) => {
+        if (item && (Array.isArray(item) || isPlainObject$1(item))) {
+          return this._convertCase(item, convertCaseOptions);
+        }
+        return item;
+      });
+    }
+
+    if (isPlainObject$1(data)) {
+      return transform$1(
         data,
         (result, value, key) => {
-          if (typeof value === 'object') {
-            result[this._convertCase(key, convertCaseOptions)] = this._convertCase(
-              value,
-              convertCaseOptions
-            );
+          let converted;
+          if (value && (Array.isArray(value) || isPlainObject$1(value))) {
+            converted = this._convertCase(value, convertCaseOptions);
           } else {
-            result[this._convertCase(key, convertCaseOptions)] = value;
+            converted = value;
           }
+
+          result[this._convertCase(key, convertCaseOptions)] = converted;
           return result;
         },
         {}
       );
-    } else {
-      switch (convertCaseOptions) {
-        case 'snake_case':
-          converted = toSnakeCase$1(data);
-          break;
-        case 'kebab-case':
-          converted = toKebabCase$1(data);
-          break;
-        case 'camelCase':
-          converted = toCamelCase$1(data);
-          break;
-        default: // Do nothing
-      }
     }
 
-    return converted;
+    if (typeof data === 'string') {
+      let converted;
+
+      switch (convertCaseOptions) {
+        case 'snake_case':
+          converted = this.convertCaseMap.snakeCase.get(data);
+          if (!converted) {
+            converted = toSnakeCase$1(data);
+            this.convertCaseMap.snakeCase.set(data, converted);
+          }
+          break;
+        case 'kebab-case':
+          converted = this.convertCaseMap.kebabCase.get(data);
+          if (!converted) {
+            converted = toKebabCase$1(data);
+            this.convertCaseMap.kebabCase.set(data, converted);
+          }
+          break;
+        case 'camelCase':
+          converted = this.convertCaseMap.camelCase.get(data);
+          if (!converted) {
+            converted = toCamelCase$1(data);
+            this.convertCaseMap.camelCase.set(data, converted);
+          }
+          break;
+      }
+
+      return converted;
+    }
+
+    return data;
   }
 };
 
