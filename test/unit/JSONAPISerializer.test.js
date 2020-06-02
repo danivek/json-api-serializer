@@ -134,7 +134,7 @@ describe('JSONAPISerializer', function() {
       const singleData = {
         _id: '1',
       };
-      const serializedData = Serializer.serializeResource('articles', singleData, _.merge(defaultOptions, {
+      const serializedData = Serializer.serializeResource('articles', singleData, _.merge({}, defaultOptions, {
         id: '_id',
       }));
       expect(serializedData).to.have.property('type').to.eql('articles');
@@ -146,13 +146,35 @@ describe('JSONAPISerializer', function() {
       done();
     });
 
+    it('should return serialized data with option beforeSerialize', function(done) {
+      const singleData = {
+        pk1: '1',
+        pk2: '4',
+      };
+      const serializedData = Serializer.serializeResource('articles', singleData, _.merge({}, defaultOptions, {
+        beforeSerialize: (data) => {
+          const { pk1, pk2, ...attributes } = data;
+          const id = `${pk1}-${pk2}`;
+          return {
+            ...attributes,
+            id
+          };
+        }
+      }));
+      expect(serializedData).to.have.property('type').to.eql('articles');
+      expect(serializedData).to.have.property('id').to.eql('1-4');
+      expect(serializedData.relationships).to.be.undefined;
+      expect(serializedData.links).to.be.undefined;
+      expect(serializedData.meta).to.be.undefined;
+
+      done();
+    });
+
     it('should return type of string for a non string id in input', function(done) {
       const singleData = {
         id: 1,
       };
-      const serializedData = Serializer.serializeResource('articles', singleData, _.merge(defaultOptions, {
-        id: 'id',
-      }));
+      const serializedData = Serializer.serializeResource('articles', singleData, defaultOptions);
       expect(serializedData).to.have.property('type').to.eql('articles');
       expect(serializedData).to.have.property('id').to.be.a('string').to.eql('1');
       done();
@@ -400,10 +422,20 @@ describe('JSONAPISerializer', function() {
       done();
     });
 
+
     it('should return serialized relationship with unpopulated relationship with mongoDB BSON ObjectID', function(done) {
       const serializedRelationshipData = Serializer.serializeRelationship('authors', 'default', new ObjectID());
       expect(serializedRelationshipData).to.have.property('type').to.eql('authors');
       expect(serializedRelationshipData).to.have.property('id').to.be.a('string');
+      done();
+    });
+
+    it('should return serialized relationship data and empty included for a relationship object wich only contains an id', function(done) {
+      const included = new Map();
+      const serializedRelationshipData = Serializer.serializeRelationship('authors', 'default', {id: '1'}, included);
+      expect(serializedRelationshipData).to.have.property('type').to.eql('authors');
+      expect(serializedRelationshipData).to.have.property('id').to.eql('1');
+      expect([...included.values()]).to.have.lengthOf(0);
       done();
     });
 
@@ -420,7 +452,7 @@ describe('JSONAPISerializer', function() {
         name: 'Author 1',
         gender: 'male'
       }, included);
-      
+
       included = [...included.values()];
       expect(serializedRelationshipData).to.have.property('type').to.eql('authors');
       expect(serializedRelationshipData).to.have.property('id').to.eql('1');
@@ -475,6 +507,38 @@ describe('JSONAPISerializer', function() {
       ]);
       done();
     });
+
+    it('should serialize relationship with classes', function(done) {
+      const included = new Map();
+      const typeFn = (data) => data.type;
+
+      const Serializer = new JSONAPISerializer();
+      Serializer.register('author');
+      class Author {
+        constructor({ id, name }) {
+          this.id = id;
+          this.name = name;
+        }
+      }
+
+      const data = new Author({
+        id: '1',
+        name: 'Kaley Maggio'
+      });
+
+      const serializedRelationships = Serializer.serializeRelationship('author', 'default', data, included);
+      expect(serializedRelationships).to.deep.equal({ type: 'author', id: '1' });
+      expect([...included.values()]).to.deep.equal([
+        {
+          type: 'author',
+          id: '1',
+          attributes: { name: 'Kaley Maggio' },
+          relationships: undefined,
+          meta: undefined,
+          links: undefined
+        }]);
+      done();
+    });
   });
 
   describe('serializeRelationships', function() {
@@ -501,18 +565,11 @@ describe('JSONAPISerializer', function() {
       done();
     });
 
-    it('should return at least data null if no links, data, or meta are deduce', function(done) {
+    it('should not serialize relationships if no links, data, or meta are deduce', function(done) {
       const serializedRelationships = Serializer.serializeRelationships({
         id: '1',
       }, Serializer.schemas.articles.default);
-      expect(serializedRelationships).to.eql({
-        author: {
-          data: null
-        },
-        comments: {
-          data: null
-        }
-      })
+      expect(serializedRelationships).to.be.undefined;
       done();
     });
 
@@ -823,12 +880,31 @@ describe('JSONAPISerializer', function() {
 
   describe('serialize', function() {
     const Serializer = new JSONAPISerializer();
+    const dataArray = [{
+      id: 1,
+      title: 'Article 1',
+    }, {
+      id: 2,
+      title: 'Article 2',
+    }, {
+      id: 3,
+      title: 'Article 3',
+    }]
+
     Serializer.register('articles', {
-      topLevelMeta: {
-        count: function(options) {
-          return options.count
-        }
-      }
+      topLevelMeta: (data, extraData) => ({
+        count: extraData.count,
+        total: data.length
+      })
+    });
+
+    it('should not include data property if excludeData is true', (done) => {
+      const serializedData = Serializer.serialize('articles', dataArray, 'default', {count: 2}, true);
+      expect(serializedData.data).to.be.undefined;
+      expect(serializedData.meta).to.have.property('count', 2)
+      expect(serializedData.meta).to.have.property('total', 3)
+      expect(serializedData.included).to.be.undefined;
+      done();
     });
 
     it('should serialize empty single data', function(done) {
@@ -952,6 +1028,156 @@ describe('JSONAPISerializer', function() {
       expect(serializedData).have.property('jsonapi').to.be.undefined;
       done();
     });
+
+    it('should override options with provided override object', function(done) {
+      const Serializer = new JSONAPISerializer();
+      Serializer.register('person', {
+        relationships: {
+          address: {
+            type: 'address'
+          }
+        }
+      });
+      Serializer.register('address', {});
+      Serializer.register('articles', {});
+      const data = {
+        id: '1',
+        'first-name': 'firstName',
+        'last-name': 'lastName',
+        'social-security-number': '000-00-0000',
+        address: {
+          id:'1',
+          'zip-code': 123456,
+          'phone-number': '000-000-0000'
+        }
+      };
+      const serializedData = Serializer.serialize('person', data, 'default', null, null, {
+        'person': {
+          convertCase: 'camelCase',
+          blacklist: ['social-security-number']
+        },
+        'address': {
+          whitelist: ['zip-code']
+        }
+      });
+      expect(serializedData.data.attributes).to.have.property('firstName');
+      expect(serializedData.data.attributes).to.have.property('lastName');
+      expect(serializedData.data.attributes).to.not.have.property('socialSecurityNumber');
+      expect(serializedData.included[0].attributes).to.have.property('zip-code');
+      expect(serializedData.included[0].attributes).to.not.have.property('phone-number');
+      done();
+    });
+
+    it('should override options with provided override object for mixedResourceType', function(done) {
+      const Serializer = new JSONAPISerializer();
+      Serializer.register('person', {
+        convertCase: 'camelCase',
+        relationships: {
+          address: {
+            type: 'address'
+          }
+        }
+      });
+      Serializer.register('address', {});
+      const data = {
+        id: '1',
+        'first-name': 'firstName',
+        'last-name': 'lastName',
+        'social-security-number': '000-00-0000',
+        address: {
+          id:'1',
+          'zip-code': 123456,
+          'phone-number': '000-000-0000'
+        },
+        type: 'person'
+      };
+      const serializedData = Serializer.serialize({
+        type: 'type',
+      }, data, 'default', null, null, {
+        'person': {
+          blacklist: ['social-security-number']
+        },
+        'address': {
+          whitelist: ['zip-code']
+        }
+      });
+      expect(serializedData.data.attributes).to.have.property('firstName');
+      expect(serializedData.data.attributes).to.have.property('lastName');
+      expect(serializedData.data.attributes).to.not.have.property('socialSecurityNumber');
+      expect(serializedData.included[0].attributes).to.have.property('zip-code');
+      expect(serializedData.included[0].attributes).to.not.have.property('phone-number');
+      done();
+    });
+
+    it('should merge relationships data if already included', function(done) {
+      const Serializer = new JSONAPISerializer();
+      Serializer.register('article', {
+        relationships: {
+          author: {
+            type: 'people'
+          },
+          comments: {
+            type: 'comment'
+          }
+        }
+      });
+      Serializer.register('people', {
+        relationships: {
+          friends: {
+            type: 'people'
+          },
+          image: {
+            type: 'image'
+          }
+        }
+      });
+      Serializer.register('comment', {
+        relationships: {
+          author: {
+            type: 'people'
+          }
+        }
+      });
+      Serializer.register('image', {});
+
+      const data = {
+        id: '1',
+        title: 'JSON API paints my bikeshed!',
+        body: 'The shortest article. Ever.',
+        created: '2015-05-22T14:56:29.000Z',
+        author: {
+          id: '1',
+          firstName: 'Kaley',
+          lastName: 'Maggio',
+          friends: [{
+            id: '2',
+            firstName: 'Kaley2',
+            lastName: 'Maggio2',
+          }]
+        },
+        comments: [{
+          id: '1',
+          body: 'I Like !',
+          author: {
+            id: '1',
+            firstName: 'Kaley',
+            lastName: 'Maggio',
+            image: {
+              id: '1',
+              title: 'Beautiful picture',
+            }
+          }
+        }]
+      };
+
+      const serializedData = Serializer.serialize('article', data);
+
+      const people1 = serializedData.included.find((include => include.type === 'people' && include.id === '1'));
+      expect(people1).to.have.property('relationships');
+      expect(people1.relationships).to.have.property('image');
+      expect(people1.relationships).to.have.property('friends');
+      done();
+    });
   });
 
   describe('serializeAsync', function() {
@@ -968,11 +1194,10 @@ describe('JSONAPISerializer', function() {
     }]
 
     Serializer.register('articles', {
-      topLevelMeta: {
-        count: function(options) {
-          return options.count
-        }
-      }
+      topLevelMeta: (data, extraData) => ({
+        count: extraData.count,
+        total: data.length,
+      })
     });
 
     it('should return a Promise', () => {
@@ -980,18 +1205,20 @@ describe('JSONAPISerializer', function() {
       expect(promise).to.be.instanceOf(Promise);
     });
 
+    it('should not include data property if excludeData is true', () => {
+      return Serializer.serializeAsync('articles', dataArray, 'default', {count: 2}, true)
+        .then((serializedData) => {
+          expect(serializedData.data).to.be.undefined;
+          expect(serializedData.meta).to.have.property('count', 2)
+          expect(serializedData.meta).to.have.property('total', 3)
+          expect(serializedData.included).to.be.undefined;
+        });
+    });
+
     it('should serialize empty single data', () =>
       Serializer.serializeAsync('articles', {})
         .then((serializedData) => {
           expect(serializedData.data).to.eql(null);
-          expect(serializedData.included).to.be.undefined;
-        })
-    );
-
-    it('should serialize empty array data', () =>
-      Serializer.serializeAsync('articles', [])
-        .then((serializedData) => {
-          expect(serializedData.data).to.eql([]);
           expect(serializedData.included).to.be.undefined;
         })
     );
@@ -1112,6 +1339,46 @@ describe('JSONAPISerializer', function() {
           expect(serializedData.data.attributes).to.have.property('title');
           expect(serializedData.data.attributes).to.have.property('body');
           expect(serializedData.included).to.be.undefined;
+        });
+    });
+
+    it('should override options with provided override object', function(done) {
+      const Serializer = new JSONAPISerializer();
+      Serializer.register('person', {
+        relationships: {
+          address: {
+            type: 'address'
+          }
+        }
+      });
+      Serializer.register('address', {});
+      const data = {
+        id: '1',
+        'first-name': 'firstName',
+        'last-name': 'lastName',
+        'social-security-number': '000-00-0000',
+        address: {
+          id:'1',
+          'zip-code': 123456,
+          'phone-number': '000-000-0000'
+        }
+      };
+      Serializer.serializeAsync('person', data, 'default', null, null, {
+        'person': {
+          convertCase: 'camelCase',
+          blacklist: ['social-security-number']
+        },
+        'address': {
+          whitelist: ['zip-code']
+        }
+      })
+        .then(serializedData => {
+          expect(serializedData.data.attributes).to.have.property('firstName');
+          expect(serializedData.data.attributes).to.have.property('lastName');
+          expect(serializedData.data.attributes).to.not.have.property('socialSecurityNumber');
+          expect(serializedData.included[0].attributes).to.have.property('zip-code');
+          expect(serializedData.included[0].attributes).to.not.have.property('phone-number');
+          done();
         });
     });
   });
@@ -1297,6 +1564,175 @@ describe('JSONAPISerializer', function() {
       done();
     });
 
+    it('should deserialize data with circular included', function(done) {
+      const Serializer = new JSONAPISerializer();
+
+      Serializer.register('article', {
+        relationships: {
+          author: { type: 'user' },
+          user: { type: 'user' },
+          profile: { type: 'profile' }
+        },
+      });
+
+      Serializer.register('user', {
+        relationships: {
+          profile: { type: 'profile' },
+        },
+      });
+
+      Serializer.register('profile', {
+        relationships: {
+          user: { type: 'user' },
+        },
+      });
+
+      const data = {
+        "data": {
+          "type": "article",
+          "id": "1",
+          "attributes": {
+            "title": "title"
+          },
+          "relationships": {
+            "author": { "data": { "type": "user", "id":  "author_id" } },
+            "user": { "data": { "type": "user", "id":  "user_id" } },
+            "profile": { "data": { "type": "profile", "id":  "profile_id" } }
+          }
+        },
+        "included": [
+          {
+            "type": "user",
+            "id": "author_id",
+            "attributes": {
+              "email": "user@example.com"
+            },
+            "relationships": {
+              "profile": { "data": { "type": "profile", "id":  "profile_id" } }
+            }
+          },
+          {
+            "type": "user",
+            "id": "user_id",
+            "attributes": {
+              "email": "user@example.com"
+            },
+          },
+          {
+            "type": "profile",
+            "id": "profile_id",
+            "attributes": {
+              "firstName": "first-name",
+              "lastName": "last-name"
+            },
+            "relationships": {
+              "user": { "data": { "type": "user", "id":  "author_id" } }
+            }
+          }
+        ]
+      }
+
+      const deserializedData = Serializer.deserialize('article', data);
+      expect(deserializedData).to.have.property('id');
+      expect(deserializedData.author).to.have.property('id');
+      expect(deserializedData.author.id).to.equal('author_id');
+      expect(deserializedData.author.profile).to.have.property('id');
+      expect(deserializedData.author.profile.id).to.equal('profile_id');
+      expect(deserializedData.author.profile.user).to.equal('author_id');
+      expect(deserializedData.user).to.have.property('id');
+      expect(deserializedData.profile).to.have.property('id');
+      done();
+    });
+
+   it('should deserialize data with circular included array', function(done) {
+    const Serializer = new JSONAPISerializer();
+
+    Serializer.register('article', {
+      relationships: {
+        author: { type: 'user' },
+        profile: {type: 'profile'}
+      },
+    });
+
+    Serializer.register('user', {
+      relationships: {
+        profile: { type: 'profile' },
+      },
+    });
+
+    Serializer.register('profile', {
+      relationships: {
+        user: { type: 'user' },
+        profile: {type: 'profile'}
+      },
+    });
+
+    const data = {
+      "data": {
+        "type": "article",
+        "id": "1",
+        "attributes": {
+          "title": "title"
+        },
+        "relationships": {
+          "author": { "data": [{ "type": "user", "id":  "1" }, { "type": "user", "id":  "2" }] },
+        }
+      },
+      "included": [
+        {
+          "type": "user",
+          "id": "1",
+          "attributes": {
+            "email": "user@example.com"
+          },
+          "relationships": {
+            "profile": { "data": [{ "type": "profile", "id":  "1" }] }
+          }
+        },
+        {
+          "type": "user",
+          "id": "2",
+          "attributes": {
+            "email": "user2@example.com"
+          },
+          "relationships": {
+            "profile": { "data": [{ "type": "profile", "id":  "2" }] }
+          }
+        },
+        {
+          "type": "profile",
+          "id": "1",
+          "attributes": {
+            "firstName": "first-name",
+            "lastName": "last-name"
+          },
+          "relationships": {
+            "user": { "data": { "type": "user", "id":  "1" } }
+          }
+        },
+        {
+          "type": "profile",
+          "id": "2",
+          "attributes": {
+            "firstName": "first-name",
+            "lastName": "last-name"
+          },
+          "relationships": {
+            "user": { "data": { "type": "user", "id":  "2" } }
+          }
+        }
+      ]
+    }
+
+    const deserializedData = Serializer.deserialize('article', data);
+    expect(deserializedData).to.have.property('id');
+    expect(deserializedData).to.have.property('author').to.be.instanceof(Array).to.have.length(2);
+    expect(deserializedData.author[0]).to.have.property('profile').to.be.instanceof(Array).to.have.length(1);
+    expect(deserializedData.author[0].profile[0]).to.have.property('user').to.equal('1');
+    expect(deserializedData.author[1].profile[0]).to.have.property('user').to.equal('2');
+    done();
+    });
+
     it('should deserialize with missing included relationship', function(done) {
       const Serializer = new JSONAPISerializer();
       Serializer.register('articles', {
@@ -1386,9 +1822,42 @@ describe('JSONAPISerializer', function() {
       done();
     });
 
-    it('should deserialize with \'alternativeKey\' option', function(done) {
+    it('should return deserialized data with option afterDeserialize', function(done) {
       const Serializer = new JSONAPISerializer();
       Serializer.register('articles', {
+        afterDeserialize: (data) => {
+          const { id, ...attributes } = data;
+          const [pk1, pk2] = id.split('-');
+          return {
+            ...attributes,
+            pk1,
+            pk2,
+          };
+        },
+      });
+
+      const data = {
+        data: {
+          type: 'article',
+          id: '1-2',
+          attributes: {
+            title: 'JSON API paints my bikeshed!',
+            body: 'The shortest article. Ever.',
+            created: '2015-05-22T14:56:29.000Z'
+          }
+        }
+      };
+
+      const deserializedData = Serializer.deserialize('articles', data);
+      expect(deserializedData).to.have.property('pk1').to.eql('1');
+      expect(deserializedData).to.have.property('pk2').to.eql('2');
+      expect(deserializedData).to.not.have.property('id');
+      done();
+    });
+
+    it('should deserialize with \'alternativeKey\' option and no included', function(done) {
+      const Serializer = new JSONAPISerializer();
+      Serializer.register('article', {
         relationships: {
           author: {
             type: 'people',
@@ -1396,6 +1865,8 @@ describe('JSONAPISerializer', function() {
           }
         }
       });
+
+      Serializer.register('people', {});
 
       const data = {
         data: {
@@ -1417,9 +1888,160 @@ describe('JSONAPISerializer', function() {
         }
       };
 
-      const deserializedData = Serializer.deserialize('articles', data);
-      expect(deserializedData).to.have.property('author_id');
-      expect(deserializedData).to.not.property('author');
+      const deserializedData = Serializer.deserialize('article', data);
+      expect(deserializedData).to.have.property('author_id').to.eql('1');
+      expect(deserializedData).to.not.have.property('author');
+      done();
+    });
+
+    it('should deserialize with \'alternativeKey\' option and included', function(done) {
+      const Serializer = new JSONAPISerializer();
+      Serializer.register('article', {
+        relationships: {
+          author: {
+            type: 'people',
+            alternativeKey: 'author_id'
+          }
+        }
+      });
+
+      Serializer.register('people', {});
+
+      const data = {
+        data: {
+          type: 'article',
+          id: '1',
+          attributes: {
+            title: 'JSON API paints my bikeshed!',
+            body: 'The shortest article. Ever.',
+            created: '2015-05-22T14:56:29.000Z'
+          },
+          relationships: {
+            author: {
+              data: {
+                type: 'people',
+                id: '1'
+              }
+            }
+          }
+        },
+        included: [
+          {
+            type: 'people',
+            id: '1',
+            attributes: {
+              firstName: 'Kaley',
+              lastName: 'Maggio',
+            }
+          }
+        ]
+      };
+
+      const deserializedData = Serializer.deserialize('article', data);
+      expect(deserializedData).to.have.property('author_id').to.eql('1');
+      expect(deserializedData).to.have.property('author').to.deep.equal({id: '1', firstName: 'Kaley', lastName: 'Maggio'});
+      done();
+    });
+
+    it('should deserialize with a relationship array and \'alternativeKey\' option and no included', function(done) {
+      const Serializer = new JSONAPISerializer();
+      Serializer.register('article', {
+        relationships: {
+          author: {
+            type: 'people',
+            alternativeKey: 'author_id'
+          }
+        }
+      });
+
+      Serializer.register('people', {});
+
+      const data = {
+        data: {
+          type: 'article',
+          id: '1',
+          attributes: {
+            title: 'JSON API paints my bikeshed!',
+            body: 'The shortest article. Ever.',
+            created: '2015-05-22T14:56:29.000Z'
+          },
+          relationships: {
+            author: {
+              data: [{
+                type: 'people',
+                id: '1'
+              }, {
+                type: 'people',
+                id: '2'
+              }]
+            }
+          }
+        }
+      };
+
+      const deserializedData = Serializer.deserialize('article', data);
+      expect(deserializedData).to.have.property('author_id').to.eql(['1', '2']);
+      expect(deserializedData).to.not.have.property('author');
+      done();
+    });
+
+    it('should deserialize with a relationship array \'alternativeKey\' option and included', function(done) {
+      const Serializer = new JSONAPISerializer();
+      Serializer.register('article', {
+        relationships: {
+          author: {
+            type: 'people',
+            alternativeKey: 'author_id'
+          }
+        }
+      });
+
+      Serializer.register('people', {});
+
+      const data = {
+        data: {
+          type: 'article',
+          id: '1',
+          attributes: {
+            title: 'JSON API paints my bikeshed!',
+            body: 'The shortest article. Ever.',
+            created: '2015-05-22T14:56:29.000Z'
+          },
+          relationships: {
+            author: {
+              data: [{
+                type: 'people',
+                id: '1'
+              }, {
+                type: 'people',
+                id: '2'
+              }]
+            }
+          }
+        },
+        included: [
+          {
+            type: 'people',
+            id: '1',
+            attributes: {
+              firstName: 'Kaley',
+              lastName: 'Maggio',
+            }
+          },
+          {
+            type: 'people',
+            id: '2',
+            attributes: {
+              firstName: 'Clarence',
+              lastName: 'Davis',
+            }
+          }
+        ]
+      };
+
+      const deserializedData = Serializer.deserialize('article', data);
+      expect(deserializedData).to.have.property('author_id').to.eql(['1', '2']);
+      expect(deserializedData).to.have.property('author').to.deep.equal([{id: '1', firstName: 'Kaley', lastName: 'Maggio'}, {id: '2', firstName: 'Clarence', lastName: 'Davis'}]);
       done();
     });
 
@@ -1498,8 +2120,57 @@ describe('JSONAPISerializer', function() {
 
     it('should deserialize with \'unconvertCase\' options', function(done) {
       const Serializer = new JSONAPISerializer();
-      Serializer.register('articles', {
-        unconvertCase: 'snake_case'
+      Serializer.register('article', {
+        unconvertCase: 'snake_case',
+        relationships: {
+          article_author: {
+            type: 'people',
+          },
+        }
+      });
+      Serializer.register('people', {
+        unconvertCase: 'snake_case',
+      });
+
+      const data = {
+        data: {
+          type: 'article',
+          id: '1',
+          attributes: {
+            createdAt: '2015-05-22T14:56:29.000Z'
+          },
+          relationships: {
+            articleAuthor: {
+              data: {
+                type: 'people',
+                id: '1'
+              }
+            }
+          }
+        },
+        included: [{
+          type: 'people',
+          id: '1',
+          attributes: { firstName: 'Karl' }
+        }]
+      };
+
+      const deserializedData = Serializer.deserialize('article', data);
+      expect(deserializedData).to.have.property('created_at');
+      expect(deserializedData.article_author).to.deep.equal({ id: '1', first_name: 'Karl' });
+      done();
+    });
+
+    it('should deserialize with \'unconvertCase\' and \'deserialize\' options', function(done) {
+      const Serializer = new JSONAPISerializer();
+      Serializer.register('article', {
+        unconvertCase: 'snake_case',
+        relationships: {
+          article_author: {
+            deserialize: data => ({ id: data.id, additionalProperty: `${data.type}-${data.id}` }),
+            type: 'people',
+          },
+        }
       });
 
       const data = {
@@ -1520,12 +2191,12 @@ describe('JSONAPISerializer', function() {
         }
       };
 
-      const deserializedData = Serializer.deserialize('articles', data);
+      const deserializedData = Serializer.deserialize('article', data);
       expect(deserializedData).to.have.property('created_at');
-      expect(deserializedData).to.have.property('article_author');
+      expect(deserializedData.article_author).to.deep.equal({ id: '1', additional_property: 'people-1' });
       done();
     });
-    
+
     it('should deserialize with \'unconvertCase\' options with \'alternative_key\' relationship', function(done) {
       const Serializer = new JSONAPISerializer();
       Serializer.register('articles', {
@@ -1537,7 +2208,7 @@ describe('JSONAPISerializer', function() {
           },
         }
       });
-    
+
       const data = {
         data: {
           type: 'article',
@@ -1555,7 +2226,7 @@ describe('JSONAPISerializer', function() {
           }
         }
       };
-    
+
       const deserializedData = Serializer.deserialize('articles', data);
       expect(deserializedData).to.have.property('created_at');
       expect(deserializedData).to.have.property('article_author_id');
@@ -1610,9 +2281,7 @@ describe('JSONAPISerializer', function() {
 
     it('should deserialize with \'links\' and \'meta\' properties', function(done) {
       const Serializer = new JSONAPISerializer();
-      Serializer.register('articles', {
-        id: '_id'
-      });
+      Serializer.register('articles');
 
       const data = {
         data: {
@@ -1643,6 +2312,72 @@ describe('JSONAPISerializer', function() {
         const Serializer = new JSONAPISerializer();
         Serializer.deserialize('authors', {});
       }).to.throw(Error, 'No type registered for authors');
+      done();
+    });
+
+    it('should throw an error if type has not been registered for included relationship', function(done) {
+      const Serializer = new JSONAPISerializer();
+      Serializer.register('article', {
+        relationships: {
+          author: {
+            type: 'people'
+          }
+        }
+      });
+
+      const data = {
+        data: {
+          id: '1',
+          type: 'article',
+          attributes: {
+            title: 'JSON API paints my bikeshed!',
+            body: 'The shortest article. Ever.',
+            created: '2015-05-22T14:56:29.000Z'
+          },
+          relationships: {
+            author: {
+              data: {
+                type: 'people',
+                id: '1'
+              }
+            }
+          }
+        },
+        included: [{
+          type: 'people',
+          id: '1',
+          attributes: {
+            firstName: 'Kaley',
+            lastName: 'Maggio',
+            email: 'Kaley-Maggio@example.com',
+            age: '80',
+            gender: 'male'
+          }
+        }]
+      };
+
+      expect(function() {
+        Serializer.deserialize('article', data);
+      }).to.throw(Error, 'No type registered for people');
+      done();
+    });
+
+    it('should deserialize with a custom schema', function(done) {
+      const Serializer = new JSONAPISerializer();
+      Serializer.register('articles', 'custom');
+
+      const data = {
+        data: {
+          type: 'article',
+          id: '1',
+          attributes: {
+            createdAt: '2015-05-22T14:56:29.000Z'
+          }
+        }
+      };
+
+      const deserializedData = Serializer.deserialize('articles', data, 'custom');
+      expect(deserializedData).to.have.property('createdAt');
       done();
     });
 
@@ -1749,6 +2484,26 @@ describe('JSONAPISerializer', function() {
         Serializer.deserializeAsync('authors', {});
       }).to.throw(Error, 'No type registered for authors');
       done();
+    });
+
+    it('should deserialize with a custom schema', function(done) {
+      const Serializer = new JSONAPISerializer();
+      Serializer.register('articles', 'custom');
+
+      const data = {
+        data: {
+          type: 'article',
+          id: '1',
+          attributes: {
+            createdAt: '2015-05-22T14:56:29.000Z'
+          }
+        }
+      };
+
+      Serializer.deserializeAsync('articles', data, 'custom').then((deserializedData) => {
+        expect(deserializedData).to.have.property('createdAt');
+        done();
+      });
     });
 
     it('should throw an error if custom schema has not been registered', function(done) {
@@ -1896,16 +2651,43 @@ describe('JSONAPISerializer', function() {
 
     it('should return serialized error with an instance of Error', function(done) {
       const error = new Error('An error occured');
+
+      const serializedError = Serializer.serializeError(error);
+
+      expect(serializedError).to.have.property('errors').to.be.instanceof(Array).to.have.lengthOf(1);
+      expect(serializedError.errors[0]).to.have.property('title').to.eql('Error');
+      expect(serializedError.errors[0]).to.have.property('detail').to.eql('An error occured');
+
+      done();
+    });
+
+    it('should return serialized error with a custom Error class', function(done) {
+      class CustomError extends Error { };
+      const error = new CustomError('An error occured');
+
+      const serializedError = Serializer.serializeError(error);
+
+      expect(serializedError).to.have.property('errors').to.be.instanceof(Array).to.have.lengthOf(1);
+      expect(serializedError.errors[0]).to.have.property('title').to.eql('CustomError');
+      expect(serializedError.errors[0]).to.have.property('detail').to.eql('An error occured');
+
+      done();
+    });
+
+    it('should return serialized error with an instance of Error including additional properties status, code and title', function(done) {
+      const error = new Error('An error occured');
       error.status = 500;
       error.code = 'ERROR';
+      error.title = 'Error title';
 
       const serializedError = Serializer.serializeError(error);
 
       expect(serializedError).to.have.property('errors').to.be.instanceof(Array).to.have.lengthOf(1);
       expect(serializedError.errors[0]).to.have.property('status').to.eql('500');
       expect(serializedError.errors[0]).to.have.property('code').to.eql('ERROR');
+      expect(serializedError.errors[0]).to.have.property('title').to.eql('Error title');
       expect(serializedError.errors[0]).to.have.property('detail').to.eql('An error occured');
-      
+
       done();
     });
 
@@ -1915,9 +2697,12 @@ describe('JSONAPISerializer', function() {
       const serializedErrors = Serializer.serializeError(errors);
 
       expect(serializedErrors).to.have.property('errors').to.be.instanceof(Array).to.have.lengthOf(2);
+
+      expect(serializedErrors.errors[0]).to.have.property('title').to.eql('Error');
       expect(serializedErrors.errors[0]).to.have.property('detail').to.eql('First Error');
+      expect(serializedErrors.errors[1]).to.have.property('title').to.eql('Error');
       expect(serializedErrors.errors[1]).to.have.property('detail').to.eql('Second Error');
-      
+
       done();
     });
 
@@ -1927,7 +2712,7 @@ describe('JSONAPISerializer', function() {
       expect(function() {
         Serializer.serializeError(jsonapiError);
       }).to.throw(Error, 'error must be an object');
-      
+
       done();
     });
 
@@ -1959,7 +2744,7 @@ describe('JSONAPISerializer', function() {
       expect(function() {
         Serializer.serializeError(jsonapiError3);
       }).to.throw(Error, 'error \'source.parameter\' property must be a string');
-      
+
       done();
     });
 
@@ -1999,11 +2784,11 @@ describe('JSONAPISerializer', function() {
       expect(function() {
         Serializer.serializeError(jsonapiErrorBadLink3);
       }).to.throw(Error, '\'links.self.meta\' property must be an object');
-      
+
       expect(function() {
         Serializer.serializeError(jsonapiErrorBadLink4);
       }).to.throw(Error, 'error \'links.self\' must be a string or an object');
-      
+
       done();
     });
 
@@ -2027,7 +2812,7 @@ describe('JSONAPISerializer', function() {
 
       expect(serializedError).to.have.property('errors').to.be.instanceof(Array).to.have.lengthOf(1);
       expect(serializedError.errors[0]).to.deep.eql(jsonapiError);
-      
+
       done();
     });
 
@@ -2058,8 +2843,73 @@ describe('JSONAPISerializer', function() {
         title: 'Second Error',
         detail: 'Second Error'
       }]);
-      
+
       done();
     });
   })
+
+ describe('convertCase', function() {
+  it('should return null', function() {
+    const jsonapiSerializer = new JSONAPISerializer();
+    const converted = jsonapiSerializer._convertCase(null, 'kebab-case');
+
+    expect(converted).to.equal(null);
+  });
+
+  it('should convert an array of object to kebab-case', function() {
+    const jsonapiSerializer = new JSONAPISerializer();
+    const converted = jsonapiSerializer._convertCase(
+      [{
+        arrayOfObject: [
+          {
+            firstProperty: 'test',
+            secondProperty: null,
+            thirdProperty: 0
+          }
+        ],
+        arrayOfNumber: [1, 2, 3, 4, 5],
+        arrayOfString: ['firstString', 'secondString'],
+        normalProperty: 'normalProperty',
+        nullProperty: null,
+      }],
+      'kebab-case'
+    );
+
+    expect(converted).to.deep.equal([{
+      'array-of-object': [{ 'first-property': 'test', 'second-property': null, 'third-property': 0 }],
+      'array-of-number': [1, 2, 3, 4, 5],
+      'array-of-string': ['firstString', 'secondString'],
+      'normal-property': 'normalProperty',
+      'null-property': null
+    }]);
+  });
+
+  it('should convert an object to kebab-case', function() {
+    const jsonapiSerializer = new JSONAPISerializer();
+    const converted = jsonapiSerializer._convertCase(
+      {
+        arrayOfObject: [
+          {
+            firstProperty: 'test',
+            secondProperty: null,
+            thirdProperty: 0
+          }
+        ],
+        arrayOfNumber: [1, 2, 3, 4, 5],
+        arrayOfString: ['firstString', 'secondString'],
+        normalProperty: 'normalProperty',
+        nullProperty: null,
+        date: new Date()
+      },
+      'kebab-case'
+    );
+
+    expect(converted['array-of-object']).to.deep.equal([{ 'first-property': 'test', 'second-property': null, 'third-property': 0 }]);
+    expect(converted['array-of-number']).to.deep.equal([1, 2, 3, 4, 5]);
+    expect(converted['array-of-string']).to.deep.equal(['firstString', 'secondString']);
+    expect(converted['normal-property']).to.equal('normalProperty');
+    expect(converted['null-property']).to.equal(null);
+    expect(converted.date).to.be.a('Date');
+  });
+ });
 });

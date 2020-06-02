@@ -54,22 +54,27 @@ Serializer.register(type, options);
     * **deserialize** (optional): Describes the function which should be used to deserialize a related property which is not included in the JSON:API document. It should be:
       * A _function_ with one argument `function(data) { ... }`which defines the format to which a relation should be deserialized. By default, the ID of the related object is returned, which would be equal to `function(data) {return data.id}`. See [issue #65](https://github.com/danivek/json-api-serializer/issues/65).
 * **convertCase** (optional): Case conversion for serializing data. Value can be : `kebab-case`, `snake_case`, `camelCase`
+* **beforeSerialize** (optional): A _function_ with one argument `beforeSerialize(data) => newData` to transform data before serialization. 
 
 **Deserialization options:**
 
 * **unconvertCase** (optional): Case conversion for deserializing data. Value can be : `kebab-case`, `snake_case`, `camelCase`
 * **blacklistOnDeserialize** (optional): An array of blacklisted attributes. Default = [].
 * **whitelistOnDeserialize** (optional): An array of whitelisted attributes. Default = [].
+* **afterDeserialize** (optional): A _function_ with one argument `afterDeserialize(data) => newData` to transform data after deserialization.
 
 **Global options:**
 
 To avoid repeating the same options for each type, it's possible to add global options on `JSONAPISerializer` instance:
 
+When using convertCase, a LRU cache is utilized for optimization. The default size of the cache is 5000 per conversion type. The size of the cache can be set with the `convertCaseCacheSize` option. Passing in 0 will result in a LRU cache of infinite size.
+
 ```javascript
 var JSONAPISerializer = require("json-api-serializer");
 var Serializer = new JSONAPISerializer({
   convertCase: "kebab-case",
-  unconvertCase: "camelCase"
+  unconvertCase: "camelCase",
+  convertCaseCacheSize: 0
 });
 ```
 
@@ -323,6 +328,40 @@ The output data will be :
 }
 ```
 
+There is an available argument `excludeData` that will exclude the `data`
+property from the serialized object. This can be used in cases where you may
+want to only include the `topLevelMeta` in your response, such as a `DELETE`
+response with only a `meta` property, or other cases defined in the
+JSON:API spec.
+
+```javascript
+// Synchronously (blocking)
+const result = Serializer.serialize('article', data, 'default', {count: 2}, true);
+
+// Asynchronously (non-blocking)
+Serializer.serializeAsync('article', data, 'default', {count: 2}, true)
+  .then((result) => {
+    ...
+  });
+```
+
+#### Override schema options
+
+On each individual call to `serialize` or `serializeAsync`, there is an parameter to override the options of any registered type. For example on a call to serialize, if a whitelist was not defined on the registered schema options, a whitelist (or any other options) for that type can be provided. This parameter is an object, where the key are the registered type names, and the values are the objects to override the registered schema.
+
+In the following example, only the attribute `name` will be serialized on the article, and if there is a relationship for `person`, it will be serialized with `camelCase` even if the registered schema has a different value.
+```
+const result = Serializer.serialize('article', data, 'default', {count: 2}, true), {
+  article: {
+    whitelist: ['name']
+  },
+  person: {
+    convertCase: 'camelCase'
+  }
+};
+```
+
+
 Some others examples are available in [tests folders](https://github.com/danivek/json-api-serializer/blob/master/test/)
 
 ### Deserialize
@@ -488,24 +527,64 @@ const deserialized = Serializer.deserializeAsync(typeConfig, data).then(result =
 });
 ```
 
+## Custom serialization and deserialization
+
+If your data requires some specific transformations, those can be applied using `beforeSerialize` and `afterDeserialize`
+
+Example for composite primary keys:
+
+```javascript
+Serializer.register('translation', {
+    beforeSerialize: (data) => {
+      // Exclude pk1 and pk2 from data
+      const { pk1, pk2, ...attributes } = data;
+
+      // Compute external id
+      const id = `${pk1}-${pk2}`;
+
+      // Return data with id
+      return {
+        ...attributes,
+        id
+      };
+    },
+    afterDeserialize: (data) => {
+      // Exclude id from data
+      const { id, ...attributes } = data;
+
+      // Recover PKs
+      const [pk1, pk2] = id.split('-');
+
+      // Return data with PKs
+      return {
+        ...attributes,
+        pk1,
+        pk2,
+      };
+    },
+});
+```
+
 ## Benchmark
 
 ```bash
 Platform info:
 ==============
-Darwin 18.5.0 x64
-Node.JS: 10.15.2
-V8: 6.8.275.32-node.12
+Darwin 18.7.0 x64
+Node.JS: 10.16.3
+V8: 6.8.275.32-node.54
 Intel(R) Core(TM) i7-4770HQ CPU @ 2.20GHz × 8
 
 Suite:
 ==============
-serializeAsync x 64,411 ops/sec ±0.59% (82 runs sampled)
-serialize x 150,408 ops/sec ±0.63% (93 runs sampled)
-deserializeAsync x 111,881 ops/sec ±0.31% (84 runs sampled)
-deserialize x 445,711 ops/sec ±0.29% (94 runs sampled)
-serializeError x 294,273 ops/sec ±0.79% (90 runs sampled)
-serializeError with a JSON API error object x 16,864,514 ops/sec ±0.32% (93 runs sampled)
+serializeAsync x 80,043 ops/sec ±0.74% (78 runs sampled)
+serialize x 135,669 ops/sec ±1.12% (88 runs sampled)
+serializeConvertCase x 98,785 ops/sec ±2.34% (88 runs sampled)
+deserializeAsync x 172,832 ops/sec ±0.41% (82 runs sampled)
+deserialize x 393,979 ops/sec ±0.32% (91 runs sampled)
+deserializeConvertCase x 119,021 ops/sec ±1.76% (95 runs sampled)
+serializeError x 276,346 ops/sec ±1.07% (86 runs sampled)
+serializeError with a JSON API error object x 15,783,113 ops/sec ±1.74% (88 runs sampled)
 ```
 
 ## License

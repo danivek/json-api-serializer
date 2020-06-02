@@ -3,50 +3,50 @@ const { expect } = require('chai');
 
 const validator = require('../../lib/validator');
 
-describe('validator', function() {
-  describe('validateDynamicTypeOptions', function() {
-    it('no type provided', done => {
-      expect(function() {
+describe('validator', function () {
+  describe('validateDynamicTypeOptions', function () {
+    it('no type provided', (done) => {
+      expect(function () {
         validator.validateDynamicTypeOptions({});
       }).to.throw(Error, "option 'type' is required");
 
       done();
     });
 
-    it('incorrect type', done => {
-      expect(function() {
+    it('incorrect type', (done) => {
+      expect(function () {
         validator.validateDynamicTypeOptions({ type: {} });
       }).to.throw(Error, 'must be a string or a function');
 
       done();
     });
 
-    it('incorrect jsonapiObject', done => {
-      expect(function() {
+    it('incorrect jsonapiObject', (done) => {
+      expect(function () {
         validator.validateDynamicTypeOptions({ type: 'test', jsonapiObject: {} });
       }).to.throw(Error, "option 'jsonapiObject' must a boolean");
 
       done();
     });
 
-    it('incorrect topLevelLinks', done => {
-      expect(function() {
+    it('incorrect topLevelLinks', (done) => {
+      expect(function () {
         validator.validateDynamicTypeOptions({ type: 'test', topLevelLinks: 'test' });
       }).to.throw(Error, "option 'topLevelLinks' must be an object or a function");
 
       done();
     });
 
-    it('incorrect topLevelMeta', done => {
-      expect(function() {
+    it('incorrect topLevelMeta', (done) => {
+      expect(function () {
         validator.validateDynamicTypeOptions({ type: 'test', topLevelMeta: 'test' });
       }).to.throw(Error, "option 'topLevelMeta' must be an object or a function");
 
       done();
     });
 
-    it('incorrect meta', done => {
-      expect(function() {
+    it('incorrect meta', (done) => {
+      expect(function () {
         validator.validateDynamicTypeOptions({ type: 'test', meta: 'test' });
       }).to.throw(Error, "option 'meta' must be an object or a function");
 
@@ -54,91 +54,91 @@ describe('validator', function() {
     });
   });
 
-  describe('validateOptions', function() {
-    it('incorrect blacklist', done => {
-      expect(function() {
+  describe('validateOptions', function () {
+    it('incorrect blacklist', (done) => {
+      expect(function () {
         validator.validateOptions({
-          blacklist: {}
+          blacklist: {},
         });
       }).to.throw(Error, "option 'blacklist' must be an array");
 
       done();
     });
 
-    it('incorrect whitelist', done => {
-      expect(function() {
+    it('incorrect whitelist', (done) => {
+      expect(function () {
         validator.validateOptions({
-          whitelist: {}
+          whitelist: {},
         });
       }).to.throw(Error, "option 'whitelist' must be an array");
 
       done();
     });
 
-    it('incorrect links', done => {
-      expect(function() {
+    it('incorrect links', (done) => {
+      expect(function () {
         validator.validateOptions({
-          links: 'test'
+          links: 'test',
         });
       }).to.throw(Error, "option 'links' must be an object or a function");
 
       done();
     });
 
-    it('incorrect meta', done => {
-      expect(function() {
+    it('incorrect meta', (done) => {
+      expect(function () {
         validator.validateOptions({
-          meta: 'test'
+          meta: 'test',
         });
       }).to.throw(Error, "option 'meta' must be an object or a function");
 
       done();
     });
 
-    it('incorrect blacklistOnDeserialize', done => {
-      expect(function() {
+    it('incorrect blacklistOnDeserialize', (done) => {
+      expect(function () {
         validator.validateOptions({
-          blacklistOnDeserialize: {}
+          blacklistOnDeserialize: {},
         });
       }).to.throw(Error, "option 'blacklistOnDeserialize' must be an array");
 
       done();
     });
 
-    it('incorrect whitelistOnDeserialize', done => {
-      expect(function() {
+    it('incorrect whitelistOnDeserialize', (done) => {
+      expect(function () {
         validator.validateOptions({
-          whitelistOnDeserialize: {}
+          whitelistOnDeserialize: {},
         });
       }).to.throw(Error, "option 'whitelistOnDeserialize' must be an array");
 
       done();
     });
 
-    it('incorrect topLevelLinks', done => {
-      expect(function() {
+    it('incorrect topLevelLinks', (done) => {
+      expect(function () {
         validator.validateOptions({
-          topLevelLinks: 'test'
+          topLevelLinks: 'test',
         });
       }).to.throw(Error, "option 'topLevelLinks' must be an object or a function");
 
       done();
     });
 
-    it('incorrect topLevelMeta', done => {
-      expect(function() {
+    it('incorrect topLevelMeta', (done) => {
+      expect(function () {
         validator.validateOptions({
-          topLevelMeta: 'test'
+          topLevelMeta: 'test',
         });
       }).to.throw(Error, "option 'topLevelMeta' must be an object or a function");
 
       done();
     });
 
-    it('incorrect convertCase', done => {
-      expect(function() {
+    it('incorrect convertCase', (done) => {
+      expect(function () {
         validator.validateOptions({
-          convertCase: 'TOCAMELCASE'
+          convertCase: 'TOCAMELCASE',
         });
       }).to.throw(
         Error,
@@ -148,10 +148,10 @@ describe('validator', function() {
       done();
     });
 
-    it('incorrect unconvertCase', done => {
-      expect(function() {
+    it('incorrect unconvertCase', (done) => {
+      expect(function () {
         validator.validateOptions({
-          unconvertCase: 'TOCAMELCASE'
+          unconvertCase: 'TOCAMELCASE',
         });
       }).to.throw(
         Error,
@@ -161,111 +161,131 @@ describe('validator', function() {
       done();
     });
 
-    it('incorrect jsonapiObject', done => {
-      expect(function() {
+    it('incorrect jsonapiObject', (done) => {
+      expect(function () {
         validator.validateOptions({
-          jsonapiObject: {}
+          jsonapiObject: {},
         });
       }).to.throw(Error, "'jsonapiObject' must a boolean");
 
       done();
     });
 
-    it('no type provided on relationship', done => {
-      expect(function() {
+    it('incorrect beforeSerialize', (done) => {
+      expect(function () {
+        validator.validateOptions({
+          beforeSerialize: 'test',
+        });
+      }).to.throw(Error, "option 'beforeSerialize' must be function");
+
+      done();
+    });
+
+    it('incorrect afterDeserialize', (done) => {
+      expect(function () {
+        validator.validateOptions({
+          afterDeserialize: 'test',
+        });
+      }).to.throw(Error, "option 'afterDeserialize' must be function");
+
+      done();
+    });
+
+    it('no type provided on relationship', (done) => {
+      expect(function () {
         validator.validateOptions({
           relationships: {
-            test: {}
-          }
+            test: {},
+          },
         });
       }).to.throw(Error, "option 'type' for relationship 'test' is required");
 
       done();
     });
 
-    it('incorrect type on relationship', done => {
-      expect(function() {
+    it('incorrect type on relationship', (done) => {
+      expect(function () {
         validator.validateOptions({
           relationships: {
             test: {
-              type: {}
-            }
-          }
+              type: {},
+            },
+          },
         });
       }).to.throw(Error, "option 'type' for relationship 'test' must be a string or a function");
 
       done();
     });
 
-    it('incorrect schema on relationship', done => {
-      expect(function() {
+    it('incorrect schema on relationship', (done) => {
+      expect(function () {
         validator.validateOptions({
           relationships: {
             test: {
               type: 'test',
-              schema: {}
-            }
-          }
+              schema: {},
+            },
+          },
         });
       }).to.throw(Error, "option 'schema' for relationship 'test' must be a string");
 
       done();
     });
 
-    it('incorrect links on relationship', done => {
-      expect(function() {
+    it('incorrect links on relationship', (done) => {
+      expect(function () {
         validator.validateOptions({
           relationships: {
             test: {
               type: 'test',
-              links: ''
-            }
-          }
+              links: '',
+            },
+          },
         });
       }).to.throw(Error, "option 'links' for relationship 'test' must be an object or a function");
 
       done();
     });
 
-    it('incorrect alternativeKey on relationship', done => {
-      expect(function() {
+    it('incorrect alternativeKey on relationship', (done) => {
+      expect(function () {
         validator.validateOptions({
           relationships: {
             test: {
               type: 'test',
-              alternativeKey: {}
-            }
-          }
+              alternativeKey: {},
+            },
+          },
         });
       }).to.throw(Error, "option 'alternativeKey' for relationship 'test' must be a string");
 
       done();
     });
 
-    it('incorrect meta on relationship', done => {
-      expect(function() {
+    it('incorrect meta on relationship', (done) => {
+      expect(function () {
         validator.validateOptions({
           relationships: {
             test: {
               type: 'test',
-              meta: ''
-            }
-          }
+              meta: '',
+            },
+          },
         });
       }).to.throw(Error, "option 'meta' for relationship 'test' must be an object or a function");
 
       done();
     });
 
-    it('incorrect deserialize on relationship', done => {
-      expect(function() {
+    it('incorrect deserialize on relationship', (done) => {
+      expect(function () {
         validator.validateOptions({
           relationships: {
             test: {
               type: 'test',
-              deserialize: 'test'
-            }
-          }
+              deserialize: 'test',
+            },
+          },
         });
       }).to.throw(Error, "option 'deserialize' for relationship 'test' must be a function");
 

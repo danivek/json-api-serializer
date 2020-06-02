@@ -1,12 +1,12 @@
 {
   "name": "json-api-serializer",
-  "version": "2.0.1",
+  "version": "2.4.2",
   "description": "Framework agnostic JSON API serializer.",
   "main": "index.js",
   "module": "dist/json-api-serializer.esm.js",
   "scripts": {
     "lint": "./node_modules/.bin/eslint .",
-    "test": "./node_modules/.bin/istanbul cover --print both ./node_modules/mocha/bin/_mocha -- -R spec ./test/**/*.js",
+    "test": "./node_modules/.bin/nyc --reporter=lcov --reporter=text --reporter=text-summary ./node_modules/mocha/bin/_mocha -R spec ./test/**/*.js",
     "build": "rollup -c",
     "coveralls": "cat ./coverage/lcov.info | node ./node_modules/coveralls/bin/coveralls.js",
     "bench": "node benchmark/index.js"
@@ -22,7 +22,7 @@
   "repository": "danivek/json-api-serializer",
   "license": "MIT",
   "engines": {
-    "node": ">= 4.0.0"
+    "node": ">= 8.0.0"
   },
   "devDependencies": {
     "@babel/preset-env": "^7.5.5",
@@ -30,15 +30,16 @@
     "benchmark": "^2.1.4",
     "bson-objectid": "^1.1.4",
     "chai": "^4.1.2",
-    "coveralls": "^3.0.1",
-    "eslint": "^5.16.0",
-    "eslint-config-airbnb-base": "^13.1.0",
-    "eslint-config-prettier": "^4.2.0",
-    "eslint-plugin-import": "^2.17.2",
-    "eslint-plugin-prettier": "^3.0.1",
-    "istanbul": "^0.4.2",
-    "mocha": "^5.2.0",
-    "prettier": "^1.17.0",
+    "coveralls": "^3.0.11",
+    "eslint": "^6.8.0",
+    "eslint-config-airbnb-base": "^14.1.0",
+    "eslint-config-prettier": "^6.10.1",
+    "eslint-plugin-import": "^2.20.1",
+    "eslint-plugin-jsdoc": "^22.1.0",
+    "eslint-plugin-prettier": "^3.1.2",
+    "mocha": "^7.1.1",
+    "nyc": "^15.0.0",
+    "prettier": "^2.0.2",
     "rollup": "^1.17.0",
     "rollup-plugin-babel": "^4.3.3",
     "rollup-plugin-uglify": "^6.0.2",

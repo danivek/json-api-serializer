@@ -9,6 +9,10 @@ const JSONAPISerializer = require('..');
 const suite = new Benchmark.Suite();
 
 const serializer = new JSONAPISerializer();
+const serializerConvert = new JSONAPISerializer({
+  convertCase: 'kebab-case',
+  unconvertCase: 'camelCase',
+});
 
 const data = [
   {
@@ -23,105 +27,116 @@ const data = [
       lastName: 'Maggio',
       email: 'Kaley-Maggio@example.com',
       age: '80',
-      gender: 'male'
+      gender: 'male',
     },
     tags: ['1', '2'],
     photos: [
       'ed70cf44-9a34-4878-84e6-0c0e4a450cfe',
       '24ba3666-a593-498c-9f5d-55a4ee08c72e',
-      'f386492d-df61-4573-b4e3-54f6f5d08acf'
+      'f386492d-df61-4573-b4e3-54f6f5d08acf',
     ],
     comments: [
       {
         _id: '1',
         body: 'First !',
-        created: '2015-08-14T18:42:16.475Z'
+        created: '2015-08-14T18:42:16.475Z',
       },
       {
         _id: '2',
         body: 'I Like !',
-        created: '2015-09-14T18:42:12.475Z'
+        created: '2015-09-14T18:42:12.475Z',
       },
       {
         _id: '3',
         body: 'Awesome',
-        created: '2015-09-15T18:42:12.475Z'
-      }
-    ]
-  }
+        created: '2015-09-15T18:42:12.475Z',
+      },
+    ],
+  },
 ];
 
-serializer.register('article', {
-  id: 'id', // The attributes to use as the reference. Default = 'id'.
+const articleSchema = {
+  id: 'id',
   links: {
     // An object or a function that describes links.
     self(d) {
       // Can be a function or a string value ex: { self: '/articles/1'}
       return `/articles/${d.id}`;
-    }
+    },
   },
   relationships: {
     // An object defining some relationships.
     author: {
-      type: 'people', // The type of the resource
+      type: 'people',
       links(d) {
         // An object or a function that describes Relationships links
         return {
           self: `/articles/${d.id}/relationships/author`,
-          related: `/articles/${d.id}/author`
+          related: `/articles/${d.id}/author`,
         };
-      }
+      },
     },
     tags: {
-      type: 'tag'
+      type: 'tag',
     },
     photos: {
-      type: 'photo'
+      type: 'photo',
     },
     comments: {
       type: 'comment',
-      schema: 'only-body' // A custom schema
-    }
+      schema: 'only-body', // A custom schema
+    },
   },
   topLevelMeta(d, extraData) {
     // An object or a function that describes top level meta.
     return {
       count: extraData.count,
-      total: d.length
+      total: d.length,
     };
   },
   topLevelLinks: {
     // An object or a function that describes top level links.
-    self: '/articles' // Can be a function (with extra data argument) or a string value
-  }
-});
+    self: '/articles',
+  },
+};
+serializer.register('article', articleSchema);
+serializerConvert.register('article', articleSchema);
 
 // Register 'people' type
-serializer.register('people', {
+const peopleSchema = {
   id: 'id',
   links: {
     self(d) {
       return `/peoples/${d.id}`;
-    }
-  }
-});
+    },
+  },
+};
+serializer.register('people', peopleSchema);
+serializerConvert.register('people', peopleSchema);
 
 // Register 'tag' type
-serializer.register('tag', {
-  id: 'id'
-});
+const tagSchema = {
+  id: 'id',
+};
+serializer.register('tag', tagSchema);
+serializerConvert.register('tag', tagSchema);
 
 // Register 'photo' type
-serializer.register('photo', {
-  id: 'id'
-});
+const photoSchema = {
+  id: 'id',
+};
+serializer.register('photo', photoSchema);
+serializerConvert.register('photo', photoSchema);
 
 // Register 'comment' type with a custom schema
-serializer.register('comment', 'only-body', {
-  id: '_id'
-});
+const commentSchema = {
+  id: '_id',
+};
+serializer.register('comment', 'only-body', commentSchema);
+serializerConvert.register('comment', 'only-body', commentSchema);
 
 let serialized;
+let serializedConvert;
 
 // Plateform
 console.log('Platform info:');
@@ -133,7 +148,7 @@ console.log('V8:', process.versions.v8);
 
 let cpus = os
   .cpus()
-  .map(cpu => cpu.model)
+  .map((cpu) => cpu.model)
   .reduce((o, model) => {
     if (!o[model]) o[model] = 0;
     o[model] += 1;
@@ -141,7 +156,7 @@ let cpus = os
   }, {});
 
 cpus = Object.keys(cpus)
-  .map(key => `${key} \u00d7 ${cpus[key]}`)
+  .map((key) => `${key} \u00d7 ${cpus[key]}`)
   .join('\n');
 
 console.info(cpus);
@@ -155,10 +170,13 @@ suite
       serializer.serializeAsync('article', data, { count: 2 }).then(() => {
         deferred.resolve();
       });
-    }
+    },
   })
   .add('serialize', () => {
     serialized = serializer.serialize('article', data, { count: 2 });
+  })
+  .add('serializeConvertCase', () => {
+    serializedConvert = serializerConvert.serialize('article', data, { count: 2 });
   })
   .add('deserializeAsync', {
     defer: true,
@@ -166,10 +184,13 @@ suite
       serializer.deserializeAsync('article', serialized).then(() => {
         deferred.resolve();
       });
-    }
+    },
   })
   .add('deserialize', () => {
     serializer.deserialize('article', serialized);
+  })
+  .add('deserializeConvertCase', () => {
+    serializerConvert.deserialize('article', serializedConvert);
   })
   .add('serializeError', () => {
     const error = new Error('An error occured');
@@ -183,13 +204,13 @@ suite
       status: '422',
       source: { pointer: '/data/attributes/error' },
       title: 'Error',
-      detail: 'An error occured'
+      detail: 'An error occured',
     };
 
     serializer.serializeError(jsonapiError);
   })
   // add listeners
-  .on('cycle', event => {
+  .on('cycle', (event) => {
     console.log(String(event.target));
   })
   .on('complete', () => {})
