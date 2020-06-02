@@ -47,7 +47,6 @@
     "rollup-plugin-terser": "^6.1.0"
   },
   "dependencies": {
-    "lodash.set": "^4.3.2",
     "setimmediate": "^1.0.5"
   }
 }
