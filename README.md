@@ -436,7 +436,7 @@ Using an instance of `Error`:
 const error = new Error('An error occurred');
 error.id = 123
 error.links = { about: 'https://example.com/errors/123' }
-error.status = 500;
+error.status = 500; // or `statusCode`
 error.code = 'xyz'
 error.meta = { time: Date.now() }
 
@@ -475,7 +475,7 @@ class MyCustomError extends Error {
     this.links = {
       about: 'https://example.com/errors/123'
     }
-    this.status = 500
+    this.status = 500 // or `statusCode`
     this.code = 'xyz'
     this.meta = {
       time: Date.now()
@@ -516,7 +516,7 @@ Serializer.serializeError({
   links: {
     about: 'https://example.com/errors/123'
   },
-  status: 500,
+  status: 500, // or `statusCode`
   code: 'xyz',
   title: 'UserNotFound',
   detail: 'Unable to find a user with the provided ID',
@@ -536,7 +536,7 @@ The result will be:
       "links": {
         "about": "https://example.com/errors/123"
       },
-      "status": "404",
+      "status": "500",
       "code": "xyz",
       "title": "UserNotFound",
       "detail": "Unable to find a user with the provided ID",
