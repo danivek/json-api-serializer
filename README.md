@@ -54,7 +54,7 @@ Serializer.register(type, options);
     * **deserialize** (optional): Describes the function which should be used to deserialize a related property which is not included in the JSON:API document. It should be:
       * A _function_ with one argument `function(data) { ... }`which defines the format to which a relation should be deserialized. By default, the ID of the related object is returned, which would be equal to `function(data) {return data.id}`. See [issue #65](https://github.com/danivek/json-api-serializer/issues/65).
 * **convertCase** (optional): Case conversion for serializing data. Value can be : `kebab-case`, `snake_case`, `camelCase`
-* **beforeSerialize** (optional): A _function_ with one argument `beforeSerialize(data) => newData` to transform data before serialization. 
+* **beforeSerialize** (optional): A _function_ with one argument `beforeSerialize(data) => newData` to transform data before serialization.
 
 **Deserialization options:**
 
@@ -427,12 +427,18 @@ Serializer.deserializeAsync('article', data)
 Serializes any error into a JSON API error document.
 
 Input data can be:
-  - An instance of Error or an array of instance of Error.
-  - A [JSON API error object](http://jsonapi.org/format/#error-objects) or an array of [JSON API error object](http://jsonapi.org/format/#error-objects).
+  - An instance of `Error` or an array of `Error` instances.
+  - A [JSON API error object](http://jsonapi.org/format/#error-objects) or an array of [JSON API error objects](http://jsonapi.org/format/#error-objects).
+
+Using an instance of `Error`:
 
 ```javascript
-const error = new Error('An error occured');
+const error = new Error('An error occurred');
+error.id = 123
+error.links = { about: 'https://example.com/errors/123' }
 error.status = 500;
+error.code = 'xyz'
+error.meta = { time: Date.now() }
 
 Serializer.serializeError(error);
 ```
@@ -443,8 +449,100 @@ The result will be:
 {
   "errors": [
     {
+      "id": 123,
+      "links": {
+        "about": "https://example.com/errors/123"
+      },
       "status": "500",
-      "detail": "An error occured"
+      "code": "xyz",
+      "title": "Error",
+      "detail": "An error occurred",
+      "meta": {
+        "time": 1593561258853
+      }
+    }
+  ]
+}
+```
+
+Using an instance of a class that inherits from `Error`:
+
+```js
+class MyCustomError extends Error {
+  constructor(message = 'Something went wrong') {
+    super(message)
+    this.id = 123
+    this.links = {
+      about: 'https://example.com/errors/123'
+    }
+    this.status = 500
+    this.code = 'xyz'
+    this.meta = {
+      time: Date.now()
+    }
+  }
+}
+
+Serializer.serializeError(new MyCustomError());
+```
+
+The result will be:
+
+```JSON
+{
+  "errors": [
+    {
+      "id": 123,
+      "links": {
+        "about": "https://example.com/errors/123"
+      },
+      "status": "500",
+      "code": "xyz",
+      "title": "MyCustomError",
+      "detail": "Something went wrong",
+      "meta": {
+        "time": 1593561258853
+      }
+    }
+  ]
+}
+```
+
+Using a POJO:
+
+```js
+Serializer.serializeError({
+  id: 123,
+  links: {
+    about: 'https://example.com/errors/123'
+  },
+  status: 500,
+  code: 'xyz',
+  title: 'UserNotFound',
+  detail: 'Unable to find a user with the provided ID',
+  meta: {
+    time: Date.now()
+  }
+});
+```
+
+The result will be:
+
+```JSON
+{
+  "errors": [
+    {
+      "id": 123,
+      "links": {
+        "about": "https://example.com/errors/123"
+      },
+      "status": "404",
+      "code": "xyz",
+      "title": "UserNotFound",
+      "detail": "Unable to find a user with the provided ID",
+      "meta": {
+        "time": 1593561258853
+      }
     }
   ]
 }
