@@ -2662,23 +2662,43 @@ describe('JSONAPISerializer', function() {
     });
 
     it('should return serialized error with a custom Error class', function(done) {
-      class CustomError extends Error { };
-      const error = new CustomError('An error occured');
+      class CustomError extends Error {
+        constructor(message = 'An error occured') {
+          super(message)
+          this.status = 500;
+          this.code = 1;
+          this.id = 2;
+          this.links = { about: 'https://yahoo.com' }
+          this.source = { pointer: '/data/attributes/error', parameter: 'test' }
+          this.meta = { foo: 'bar' }
+        }
+      };
+      const error = new CustomError();
 
       const serializedError = Serializer.serializeError(error);
 
       expect(serializedError).to.have.property('errors').to.be.instanceof(Array).to.have.lengthOf(1);
       expect(serializedError.errors[0]).to.have.property('title').to.eql('CustomError');
       expect(serializedError.errors[0]).to.have.property('detail').to.eql('An error occured');
+      expect(serializedError.errors[0]).to.have.property('status').to.eql('500');
+      expect(serializedError.errors[0]).to.have.property('code').to.eql('1');
+      expect(serializedError.errors[0]).to.have.property('id').to.eql(2);
+      expect(serializedError.errors[0]).to.have.property('links').to.eql({about: 'https://yahoo.com'});
+      expect(serializedError.errors[0]).to.have.property('source').to.eql({pointer: '/data/attributes/error', parameter: 'test'});
+      expect(serializedError.errors[0]).to.have.property('meta').to.eql({foo: 'bar'});
 
       done();
     });
 
-    it('should return serialized error with an instance of Error including additional properties status, code and title', function(done) {
+    it('should return serialized error with an instance of Error including additional properties', function(done) {
       const error = new Error('An error occured');
       error.status = 500;
       error.code = 'ERROR';
       error.title = 'Error title';
+      error.id = 1
+      error.links = { about: 'https://google.com' }
+      error.source = { pointer: '/data/attributes/error', parameter: 'test' }
+      error.meta = { foo: 'bar' }
 
       const serializedError = Serializer.serializeError(error);
 
@@ -2687,6 +2707,10 @@ describe('JSONAPISerializer', function() {
       expect(serializedError.errors[0]).to.have.property('code').to.eql('ERROR');
       expect(serializedError.errors[0]).to.have.property('title').to.eql('Error title');
       expect(serializedError.errors[0]).to.have.property('detail').to.eql('An error occured');
+      expect(serializedError.errors[0]).to.have.property('id').to.eql(1);
+      expect(serializedError.errors[0]).to.have.property('links').to.eql({about: 'https://google.com'});
+      expect(serializedError.errors[0]).to.have.property('source').to.eql({pointer: '/data/attributes/error', parameter: 'test'});
+      expect(serializedError.errors[0]).to.have.property('meta').to.eql({foo: 'bar'});
 
       done();
     });
@@ -2773,21 +2797,77 @@ describe('JSONAPISerializer', function() {
         }
       };
 
+      const jsonapiErrorBadLink5 = {
+        links: {
+          about: true
+        }
+      };
+
       expect(function() {
         Serializer.serializeError(jsonapiErrorBadLink1);
       }).to.throw(Error, 'error \'link\' property must be an object');
 
       expect(function() {
         Serializer.serializeError(jsonapiErrorBadLink2);
-      }).to.throw(Error, '\'links.self.href\' property must be a string');
+      }).to.throw(Error, 'error \'links.self\' is not permitted');
 
       expect(function() {
         Serializer.serializeError(jsonapiErrorBadLink3);
-      }).to.throw(Error, '\'links.self.meta\' property must be an object');
+      }).to.throw(Error, 'error \'links.self\' is not permitted');
 
       expect(function() {
         Serializer.serializeError(jsonapiErrorBadLink4);
-      }).to.throw(Error, 'error \'links.self\' must be a string or an object');
+      }).to.throw(Error, 'error \'links.self\' is not permitted');
+
+      expect(function() {
+        Serializer.serializeError(jsonapiErrorBadLink5);
+      }).to.throw(Error, '\'links.about\' property must be a string');
+
+      done();
+    });
+
+    it('should return a validation error with bad source', function(done) {
+      const jsonapiErrorBadSource1 = {
+        source: {
+          unsupported: 'test'
+        }
+      }
+
+      expect(function() {
+        Serializer.serializeError(jsonapiErrorBadSource1);
+      }).to.throw(Error, 'error \'source.unsupported\' is not permitted');
+
+      done();
+    });
+
+    it('should return a validation error with bad meta', function(done) {
+      const jsonapiErrorBadMeta1 = {
+        meta: 'test'
+      }
+
+      expect(function() {
+        Serializer.serializeError(jsonapiErrorBadMeta1);
+      }).to.throw(Error, 'error \'meta\' property must be an object');
+
+      done();
+    });
+
+    it('should return a validation error with bad status', function(done) {
+      const jsonapiErrorBadStatus1 = {
+        status: 'not a number'
+      }
+
+      const jsonapiErrorBadStatus2 = {
+        status: 999
+      }
+
+      expect(function() {
+        Serializer.serializeError(jsonapiErrorBadStatus1);
+      }).to.throw(Error, 'error \'status\' must be a number');
+
+      expect(function() {
+        Serializer.serializeError(jsonapiErrorBadStatus2);
+      }).to.throw(Error, 'error \'status\' must be a valid HTTP status code');
 
       done();
     });
@@ -2795,23 +2875,33 @@ describe('JSONAPISerializer', function() {
     it('should return serialized error with a JSON API error object', function(done) {
       const jsonapiError = {
         id: '1',
-        status: '422',
+        status: 422,
         links: {
-          about: {
-            href: '/path/to/about'
-          }
+          about: '/path/to/about'
         },
-        code: '1',
+        code: 1,
         title: 'Error',
         detail: 'An error occured',
         source: { pointer: '/data/attributes/error' },
         meta: {}
       };
 
+      const expected = {
+        id: '1',
+        status: '422',
+        links: {
+          about: '/path/to/about'
+        },
+        code: '1',
+        title: 'Error',
+        detail: 'An error occured',
+        source: { pointer: '/data/attributes/error' }
+      };
+
       const serializedError = Serializer.serializeError(jsonapiError);
 
       expect(serializedError).to.have.property('errors').to.be.instanceof(Array).to.have.lengthOf(1);
-      expect(serializedError.errors[0]).to.deep.eql(jsonapiError);
+      expect(serializedError.errors[0]).to.deep.eql(expected);
 
       done();
     });
