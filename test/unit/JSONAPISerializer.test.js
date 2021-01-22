@@ -2081,6 +2081,77 @@ describe('JSONAPISerializer', function() {
       done();
     });
 
+    it('should deserializing relationship when alternativeKey is set and relationship data is not in the included array', function (done) {
+      const Serializer = new JSONAPISerializer();
+    
+      Serializer.register('article', {
+        id: 'id',
+        relationships: {
+          author: {
+            type: 'people',
+            alternativeKey: 'author_id',
+          },
+        },
+      });
+    
+      Serializer.register('people', {
+        id: 'id',
+        relationships: {
+          role: {
+            alternativeKey: 'role_id',
+            type: 'role',
+          },
+        },
+      });
+    
+      Serializer.register('role', {});
+    
+      const data = {
+        data: {
+          type: 'article',
+          id: '1',
+          attributes: {
+            title: 'JSON API paints my bikeshed!',
+            body: 'The shortest article. Ever.',
+            created: '2015-05-22T14:56:29.000Z',
+          },
+          relationships: {
+            author: {
+              data: {
+                type: 'people',
+                id: '1',
+              },
+            },
+          },
+        },
+        included: [
+          {
+            type: 'people',
+            id: '1',
+            attributes: {
+              firstName: 'Kaley',
+              lastName: 'Maggio',
+            },
+            relationships: {
+              role: {
+                data: {
+                  type: 'role',
+                  id: '1',
+                },
+              },
+            },
+          },
+        ],
+      };
+    
+      const deserializedData = Serializer.deserialize('article', data);
+      expect(deserializedData).to.have.property('author_id').to.eql('1');
+      expect(deserializedData).to.have.property('author');
+      expect(deserializedData.author).to.have.property('role_id').to.eql('1');
+      expect(deserializedData.author).to.not.have.property('role');
+      done();
+    });    
+
     it('should deserialize with \'deserialize\' option as a function', function(done) {
       const Serializer = new JSONAPISerializer();
       Serializer.register('articles', {
