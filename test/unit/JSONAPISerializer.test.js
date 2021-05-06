@@ -1769,6 +1769,43 @@ describe('JSONAPISerializer', function() {
       done();
     });
 
+    it('should deserialize with missing included relationship and deserialize function', function(done) {
+      const Serializer = new JSONAPISerializer();
+      Serializer.register('articles', {
+        relationships: {
+          author: {
+            type: 'people',
+            deserialize: data => ({ id: data.id })
+          }
+        }
+      });
+      Serializer.register('people', {});
+
+      const data = {
+        data: {
+          type: 'article',
+          id: '1',
+          attributes: {
+            title: 'JSON API paints my bikeshed!',
+          },
+          relationships: {
+            author: {
+              data: {
+                type: 'people',
+                id: '1'
+              }
+            }
+          }
+        },
+        included: []
+      }
+
+      const deserializedData = Serializer.deserialize('articles', data);
+      // People with id '1' is missing in included
+      expect(deserializedData).to.have.property('author').to.deep.eql({ id: '1' });
+      done();
+    });
+
     it('should deserialize an array of data', function(done) {
       const Serializer = new JSONAPISerializer();
       Serializer.register('articles', {});
@@ -2083,7 +2120,7 @@ describe('JSONAPISerializer', function() {
 
     it('should deserializing relationship when alternativeKey is set and relationship data is not in the included array', function (done) {
       const Serializer = new JSONAPISerializer();
-    
+
       Serializer.register('article', {
         id: 'id',
         relationships: {
@@ -2093,7 +2130,7 @@ describe('JSONAPISerializer', function() {
           },
         },
       });
-    
+
       Serializer.register('people', {
         id: 'id',
         relationships: {
@@ -2103,9 +2140,9 @@ describe('JSONAPISerializer', function() {
           },
         },
       });
-    
+
       Serializer.register('role', {});
-    
+
       const data = {
         data: {
           type: 'article',
@@ -2143,14 +2180,14 @@ describe('JSONAPISerializer', function() {
           },
         ],
       };
-    
+
       const deserializedData = Serializer.deserialize('article', data);
       expect(deserializedData).to.have.property('author_id').to.eql('1');
       expect(deserializedData).to.have.property('author');
       expect(deserializedData.author).to.have.property('role_id').to.eql('1');
       expect(deserializedData.author).to.not.have.property('role');
       done();
-    });    
+    });
 
     it('should deserialize with \'deserialize\' option as a function', function(done) {
       const Serializer = new JSONAPISerializer();
