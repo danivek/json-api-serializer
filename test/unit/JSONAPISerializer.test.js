@@ -2470,6 +2470,70 @@ describe('JSONAPISerializer', function() {
       done();
     });
 
+    it('should throw an error if type has not been registered for a relationship of included relationship', function(done) {
+      const Serializer = new JSONAPISerializer();
+      Serializer.register('article', {
+        relationships: {
+          author: {
+            type: 'people'
+          }
+        }
+      });
+
+      Serializer.register('people', {});
+
+      const data = {
+        data: {
+          id: '1',
+          type: 'article',
+          attributes: {
+            title: 'JSON API paints my bikeshed!',
+            body: 'The shortest article. Ever.',
+            created: '2015-05-22T14:56:29.000Z'
+          },
+          relationships: {
+            author: {
+              data: {
+                type: 'people',
+                id: '1'
+              }
+            },
+          }
+        },
+        included: [
+          {
+            type: 'people',
+            id: '1',
+            attributes: {
+              firstName: 'Kaley',
+              lastName: 'Maggio',
+              email: 'Kaley-Maggio@example.com',
+              age: '80',
+              gender: 'male'
+            },
+            relationships: {
+              profile: {
+                data: {
+                  type: 'profile',
+                  id: '1'
+                }
+              }
+            }
+          },
+          {
+            type: 'profile',
+            id: '1',
+            attributes: {}
+          }
+        ]
+      };
+
+      expect(function() {
+        Serializer.deserialize('article', data);
+      }).to.throw(Error, 'No type registered for profile');
+      done();
+    });
+
     it('should deserialize with a custom schema', function(done) {
       const Serializer = new JSONAPISerializer();
       Serializer.register('articles', 'custom');
