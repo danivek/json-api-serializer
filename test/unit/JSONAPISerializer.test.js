@@ -439,6 +439,31 @@ describe('JSONAPISerializer', function() {
       done();
     });
 
+    it('should return serialized relationship data and included for a relationship object with at least relationships', function(done) {
+      const serializer = new JSONAPISerializer();
+      serializer.register('authors', {
+        relationships: {
+          friends: {
+            type: 'people'
+          }
+        }
+      });
+      serializer.register('people');
+
+      const included = new Map();
+      const serializedRelationshipData = serializer.serializeRelationship('authors', 'default', {id: '1', friends: ['1', '2']}, included);
+      expect(serializedRelationshipData).to.have.property('type').to.eql('authors');
+      expect(serializedRelationshipData).to.have.property('id').to.eql('1');
+      const includedValue = [...included.values()];
+      expect(includedValue).to.have.lengthOf(1);
+      expect(includedValue[0]).to.have.property('type').to.eql('authors');
+      expect(includedValue[0]).to.have.property('id').to.eql('1');
+      expect(includedValue[0]).to.have.property('relationships').to.have.property('friends').to.have.property('data').to.have.lengthOf(2);
+      expect(includedValue[0].relationships.friends.data[0]).to.have.property('type').to.eql('people');
+      expect(includedValue[0].relationships.friends.data[0]).to.have.property('id').to.eql('1');
+      done();
+    });
+
     it('should return serialized relationship data and populated included with a custom schema', function(done) {
       const Serializer2 = new JSONAPISerializer();
       // Custom schema 'only-name' for authors resource
