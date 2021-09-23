@@ -671,6 +671,126 @@ describe('JSONAPISerializer', function() {
     });
   });
 
+  describe('deserializeRelationships', () => {
+    it('should deserialize relationships when unregistered relationship is null', () => {
+      const Serializer = new JSONAPISerializer();
+      Serializer.register('article');
+      Serializer.register('people');
+
+      const data = {
+        data: {
+          id: '1',
+          type: 'article',
+          relationships: {
+            author: {}
+          }
+        },
+        included: [
+          {
+            type: 'people',
+            id: '1'
+          }
+        ]
+      };
+
+      const deserialized = Serializer.deserialize('article', data);
+
+      expect(deserialized.author).to.eql(undefined);
+    });
+
+    it('should deserialize relationships when unregistered relationship is empty', () => {
+      const Serializer = new JSONAPISerializer();
+      Serializer.register('article');
+      Serializer.register('people');
+
+      const data = {
+        data: {
+          id: '1',
+          type: 'article',
+          relationships: {
+            authors: {
+              data: []
+            }
+          }
+        },
+        included: [
+          {
+            type: 'people',
+            id: '1'
+          }
+        ]
+      };
+
+      const deserialized = Serializer.deserialize('article', data);
+
+      expect(deserialized.authors).to.be.empty;
+    });
+
+    it('should deserialize relationships when unregistered relationship is an array', () => {
+      const Serializer = new JSONAPISerializer();
+      Serializer.register('article');
+      Serializer.register('people');
+
+      const data = {
+        data: {
+          id: '1',
+          type: 'article',
+          relationships: {
+            authors: {
+              data: [
+                {
+                  type: 'people',
+                  id: '1'
+                }
+              ]
+            }
+          }
+        },
+        included: [
+          {
+            type: 'people',
+            id: '1'
+          }
+        ]
+      };
+
+      const deserialized = Serializer.deserialize('article', data);
+
+      expect(deserialized.authors[0].id).to.equal('1');
+    });
+
+    it('should deserialize relationships when relationship is not registered', () => {
+      const Serializer = new JSONAPISerializer();
+      Serializer.register('article');
+      Serializer.register('people');
+
+      const data = {
+        data: {
+          id: '1',
+          type: 'article',
+          relationships: {
+            author: {
+              data: {
+                type: 'people',
+                id: '1'
+              }
+            }
+          }
+        },
+        included: [
+          {
+            type: 'people',
+            id: '1'
+          }
+        ]
+      };
+
+      const deserialized = Serializer.deserialize('article', data);
+
+      expect(deserialized.author.id).to.equal('1');
+    });
+  });
+
   describe('serializeAttributes', function() {
     const Serializer = new JSONAPISerializer();
     Serializer.register('articles');
