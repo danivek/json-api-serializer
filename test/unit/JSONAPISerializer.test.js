@@ -2961,6 +2961,22 @@ describe('JSONAPISerializer', function() {
 
       done();
     });
+
+    it("should return deserialized data without 'id' for a single data without 'id'", function(done) {
+      const singleData = {
+        data: {
+          type: 'article',
+          attributes: {
+            title: 'JSON API paints my bikeshed!',
+          }
+        }
+      };
+      const deserializedData = Serializer.deserialize(typeOption, singleData);
+
+      expect(deserializedData).to.not.have.property('id');
+      expect(deserializedData).to.have.property('title').to.eql('JSON API paints my bikeshed!');
+      done();
+    });
   });
 
   describe('serializeError', function() {
