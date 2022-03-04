@@ -1,6 +1,6 @@
 # json-api-serializer
 
-[![Build Status](https://travis-ci.org/danivek/json-api-serializer.svg?branch=master)](https://travis-ci.org/danivek/json-api-serializer)
+[![build](https://github.com/danivek/json-api-serializer/workflows/build/badge.svg)](https://github.com/danivek/json-api-serializer/actions?query=workflow%3Abuild)
 [![Coverage Status](https://coveralls.io/repos/github/danivek/json-api-serializer/badge.svg?branch=master)](https://coveralls.io/github/danivek/json-api-serializer?branch=master)
 [![npm](https://img.shields.io/npm/v/json-api-serializer.svg)](https://www.npmjs.org/package/json-api-serializer)
 
