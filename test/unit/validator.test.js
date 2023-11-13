@@ -142,7 +142,7 @@ describe('validator', function () {
         });
       }).to.throw(
         Error,
-        "option 'convertCase' must be one of 'kebab-case', 'snake_case', 'camelCase'"
+        "option 'convertCase' must be one of 'kebab-case', 'snake_case', 'camelCase'",
       );
 
       done();
@@ -155,7 +155,7 @@ describe('validator', function () {
         });
       }).to.throw(
         Error,
-        "option 'unconvertCase' must be one of 'kebab-case', 'snake_case', 'camelCase'"
+        "option 'unconvertCase' must be one of 'kebab-case', 'snake_case', 'camelCase'",
       );
 
       done();
