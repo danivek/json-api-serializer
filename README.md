@@ -668,21 +668,21 @@ Serializer.register('translation', {
 ```bash
 Platform info:
 ==============
-Darwin 18.7.0 x64
-Node.JS: 10.16.3
-V8: 6.8.275.32-node.54
+Darwin 21.6.0 x64
+Node.JS: 20.9.0
+V8: 11.3.244.8-node.16
 Intel(R) Core(TM) i7-4770HQ CPU @ 2.20GHz × 8
 
 Suite:
 ==============
-serializeAsync x 80,043 ops/sec ±0.74% (78 runs sampled)
-serialize x 135,669 ops/sec ±1.12% (88 runs sampled)
-serializeConvertCase x 98,785 ops/sec ±2.34% (88 runs sampled)
-deserializeAsync x 172,832 ops/sec ±0.41% (82 runs sampled)
-deserialize x 393,979 ops/sec ±0.32% (91 runs sampled)
-deserializeConvertCase x 119,021 ops/sec ±1.76% (95 runs sampled)
-serializeError x 276,346 ops/sec ±1.07% (86 runs sampled)
-serializeError with a JSON API error object x 15,783,113 ops/sec ±1.74% (88 runs sampled)
+serializeAsync x 17,846 ops/sec ±1.38% (79 runs sampled)
+serialize x 147,769 ops/sec ±0.54% (93 runs sampled)
+serializeConvertCase x 111,373 ops/sec ±0.72% (96 runs sampled)
+deserializeAsync x 20,925 ops/sec ±1.39% (78 runs sampled)
+deserialize x 271,116 ops/sec ±0.32% (95 runs sampled)
+deserializeConvertCase x 109,091 ops/sec ±0.32% (96 runs sampled)
+serializeError x 105,983 ops/sec ±0.71% (93 runs sampled)
+serializeError with a JSON API error object x 7,431,126 ops/sec ±0.47% (92 runs sampled)
 ```
 
 ## License
