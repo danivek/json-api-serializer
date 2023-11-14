@@ -291,5 +291,20 @@ describe('validator', function () {
 
       done();
     });
+
+    it('incorrect data on relationship', (done) => {
+      expect(function () {
+        validator.validateOptions({
+          relationships: {
+            test: {
+              type: 'test',
+              data: 'test',
+            },
+          },
+        });
+      }).to.throw(Error, "option 'data' for relationship 'test' must be a function");
+
+      done();
+    });
   });
 });
