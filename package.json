@@ -3,8 +3,10 @@
   "version": "2.6.6",
   "description": "Framework agnostic JSON API serializer.",
   "main": "index.js",
+  "types": "index.d.ts",
   "exports": {
     ".": {
+      "types": "./index.d.ts",
       "import": "./index.mjs",
       "require": "./index.js",
       "default": "./index.js"

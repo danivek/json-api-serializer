@@ -1,4 +1,5 @@
 *
 !index.js
 !index.mjs
+!index.d.ts
 !lib/**
