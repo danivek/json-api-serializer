@@ -669,6 +669,37 @@ describe('JSONAPISerializer', function() {
       expect(serializedRelationships.author).to.have.property('links').to.be.undefined;
       done();
     });
+
+    it('should return relationships with data option', function(done) {
+      const Serializer = new JSONAPISerializer();
+
+      Serializer.register('article', {
+        relationships: {
+          comments: {
+            type: 'comment',
+            data: (data) => data.data
+          }
+        }
+      });
+      Serializer.register('comment');
+
+      const serializedRelationships = Serializer.serializeRelationships({
+        id: '1',
+        comments: {
+          total: 2,
+          data: [{id: '1', title: 'comment 1'}, {id: '2', title: 'comment 2'}]
+        }
+      }, Serializer.schemas.article.default);
+      console.log(JSON.stringify(serializedRelationships, null, 2));
+      expect(serializedRelationships).to.have.property('comments');
+      expect(serializedRelationships.comments).to.have.property('data');
+      expect(serializedRelationships.comments.data).to.be.instanceof(Array).to.have.length(2);
+      expect(serializedRelationships.comments.data[0]).to.have.property('type').to.eql('comment');
+      expect(serializedRelationships.comments.data[0]).to.have.property('id').to.be.a('string').to.eql('1');
+      expect(serializedRelationships.comments.data[1]).to.have.property('id').to.be.a('string').to.eql('2');
+      expect(serializedRelationships.comments).to.have.property('links').to.be.undefined;
+      done();
+    });
   });
 
   describe('deserializeRelationships', () => {
