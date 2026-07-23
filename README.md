@@ -365,6 +365,22 @@ const result = Serializer.serialize('article', data, 'default', {count: 2}, true
 
 Some others examples are available in [tests folders](https://github.com/danivek/json-api-serializer/blob/master/test/)
 
+#### Serialize a relationship endpoint
+
+To serialize a [relationship endpoint](https://jsonapi.org/format/#fetching-relationships) (e.g. `GET /articles/1/relationships/tags`), use `serializeRelationshipData(type, data, [schema], [extraData])`. It returns a top-level document whose `data` contains [resource identifier objects](https://jsonapi.org/format/#document-resource-identifier-objects) only (`{ type, id }`), without `attributes` or nested `relationships`.
+
+```javascript
+Serializer.serializeRelationshipData('tag', [{ id: '2', name: 'foo' }, { id: '3', name: 'bar' }]);
+// {
+//   "data": [
+//     { "type": "tag", "id": "2" },
+//     { "type": "tag", "id": "3" }
+//   ]
+// }
+```
+
+`data` can be full resource objects (only the `id` is read) or bare ids, a single value or an array. Empty to-one relationships serialize to `null` and empty to-many relationships to `[]`.
+
 ### Deserialize
 
 input data (can be an simple object or an array of objects)

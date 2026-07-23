@@ -1356,6 +1356,53 @@ describe('JSONAPISerializer', function() {
     });
   });
 
+  describe('serializeRelationshipData', function() {
+    const Serializer = new JSONAPISerializer();
+    Serializer.register('tag', {});
+
+    it('should serialize to-many linkage as resource identifier objects only', function(done) {
+      const tags = [{id: '2', name: 'foo'}, {id: '3', name: 'bar'}];
+
+      const serializedData = Serializer.serializeRelationshipData('tag', tags);
+
+      expect(serializedData.data).to.be.instanceof(Array).to.have.length(2);
+      expect(serializedData.data[0]).to.eql({type: 'tag', id: '2'});
+      expect(serializedData.data[1]).to.eql({type: 'tag', id: '3'});
+      expect(serializedData.data[0]).to.not.have.property('attributes');
+      expect(serializedData.included).to.be.undefined;
+      done();
+    });
+
+    it('should serialize to-one linkage as a single resource identifier object', function(done) {
+      const serializedData = Serializer.serializeRelationshipData('tag', {id: '2', name: 'foo'});
+
+      expect(serializedData.data).to.eql({type: 'tag', id: '2'});
+      expect(serializedData.data).to.not.have.property('attributes');
+      expect(serializedData.included).to.be.undefined;
+      done();
+    });
+
+    it('should serialize linkage from bare ids', function(done) {
+      const serializedData = Serializer.serializeRelationshipData('tag', ['2', '3']);
+
+      expect(serializedData.data[0]).to.eql({type: 'tag', id: '2'});
+      expect(serializedData.data[1]).to.eql({type: 'tag', id: '3'});
+      done();
+    });
+
+    it('should serialize empty to-many linkage as an empty array', function(done) {
+      const serializedData = Serializer.serializeRelationshipData('tag', []);
+      expect(serializedData.data).to.eql([]);
+      done();
+    });
+
+    it('should serialize empty to-one linkage as null', function(done) {
+      const serializedData = Serializer.serializeRelationshipData('tag', null);
+      expect(serializedData.data).to.eql(null);
+      done();
+    });
+  });
+
   describe('serializeAsync', function() {
     const Serializer = new JSONAPISerializer();
     const dataArray = [{

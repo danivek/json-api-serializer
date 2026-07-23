@@ -52,6 +52,7 @@ declare class JSONAPISerializer {
     serialize(type: string | DynamicTypeOptions, data: any, schema?: string, extraData?: any, excludeData?: boolean, overrideSchemaOptions?: { [type: string]: Partial<Options> }): any;
     serializeAsync(type: string | DynamicTypeOptions, data: any, extraData?: any): Promise<any>;
     serializeAsync(type: string | DynamicTypeOptions, data: any, schema?: string, extraData?: any, excludeData?: boolean, overrideSchemaOptions?: { [type: string]: Partial<Options> }): Promise<any>;
+    serializeRelationshipData(type: string | DynamicTypeOptions, data: any, schema?: string, extraData?: any): any;
     deserialize(type: string | DynamicTypeOptions, data: any, schema?: string): any;
     deserializeAsync(type: string | DynamicTypeOptions, data: any, schema?: string): Promise<any>;
     serializeError(error: Error | Error[] | ErrorWithStatus | ErrorWithStatus[] | { [key: string]: any } | { [key: string]: any }[]): any;
